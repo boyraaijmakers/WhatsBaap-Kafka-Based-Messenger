@@ -1,7 +1,9 @@
 package upm.lssp.worker;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -10,6 +12,8 @@ import java.util.prefs.NodeChangeEvent;
 public class ZookeeperWorker {
 
     ZooKeeper zoo = null;
+    Boolean registered = false;
+    Boolean online = false;
 
     public ZookeeperWorker() {
         connect();
@@ -36,27 +40,73 @@ public class ZookeeperWorker {
         }
     }
 
-    private String createRequest(String username, String a) {
-        final String action = a;
+    private String createRequest(String username, String action) {
+
+        final String path = "/request/" + action + "/" + username;
+
         try {
             zoo.create(
-                    "/request/" + action + "/" + username,
+                    path,
                     "-1".getBytes(),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
 
+            Watcher w = new Watcher() {
+                public void process(WatchedEvent we) {
+                    if(we.getType() == Event.EventType.NodeDataChanged) {
+                        try {
+                            handleWatcher(we.getPath(), path.split("/")[2], null);
+                        } catch (Exception e) {
+
+                        }
+                    }
+                }
+            };
+
+            byte[] data =  zoo.getData("/request/" + action + "/" + username,
+                    w, null);
+            String result = new String(data);
+
+            if(result != "-1") {
+                handleWatcher(path, action, result);
+            }
 
             return "Success!";
 
         } catch (Exception e) {
+            System.out.println("Error");
             return e.getMessage();
         }
     }
 
-    private synchronized void handleWatcher(WatchedEvent we, String action) {
-        System.out.println(we.getPath());
-        System.out.println(we.getState());
-        System.out.println(we.getType());
+    private void handleWatcher(String path, String action, String res) {
+        String result;
+
+        if(res == null) {
+            try {
+                result =  new String(zoo.getData(path, false, null));
+            } catch (Exception e) {
+                e.printStackTrace();
+                result = "0";
+            }
+        } else {
+            result = res;
+        }
+
+        try {
+            zoo.delete(path, -1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (result == "1" || result == "2") {
+            if(action == "enroll"){
+                this.registered = true;
+            } else {
+                this.registered = false;
+            }
+
+        }
     }
 
     private Stat checkNode(String path){
@@ -68,6 +118,7 @@ public class ZookeeperWorker {
     }
 
     public String register(String username) {
+
         if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) != null ) {
@@ -90,7 +141,7 @@ public class ZookeeperWorker {
             createRequest(username, "quit");
         }
 
-        return null;
+        return "Deletion success";
     }
 
     public boolean goOnline(String username) {
@@ -119,7 +170,6 @@ public class ZookeeperWorker {
 
     public void readMessages() {
         if (zoo == null) connect();
-
     }
 
     public String getOnlineUsers(String username) {
@@ -129,7 +179,7 @@ public class ZookeeperWorker {
             if (checkNode("/online/" + username) != null) {
                 zoo.getChildren("/online", false);
             } else {
-                return "Only logged-in users see other online users";
+                return "Only online users see other online users";
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
