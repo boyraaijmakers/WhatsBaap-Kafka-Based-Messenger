@@ -5,6 +5,12 @@ const bodyParser = require('body-parser');
 
 const zk = require('node-zookeeper-client');
 const ZookeeperWatcher = require('zookeeper-watcher');
+const kafka = require('kafka-node');
+
+const KAFKA_PARTITION = 3;
+const KAFKA_REPLICATION_FACTOR = 3;
+
+const MANUAL_MANAGEMENT = true;
 
 function createZkTreeStructure () {
 
@@ -64,21 +70,18 @@ function handleWatcherResult(path, child) {
 function loginUser(user) {
     zkClient.exists('/registry/' + user, (err, stat) => {
         if(stat) {
-            if(!userHasKafkaTopic(user)) {
-                createKafkaTopic(user);
-            } 
+            createKafkaTopic(user);
         } else{
             console.log("Attempt of unregistered user " + user + " to log in!");
         }
     });
 }
 
-function userHasKafkaTopic(user) {
-    return false;
-}
-
 function createKafkaTopic(user) {
-
+    kaClient.loadMetadataForTopics([user], (error, result) => {
+        if (error) console.log(error);
+        console.log(result);
+    });
 }
 
 function deleteKafkaTopic(user) {
@@ -147,9 +150,6 @@ function removeUser(user) {
 function getRegisteredUsers(res) {
     zkClient.getChildren(
         "/registry",
-        (error) => {
-            console.log('Got watcher event: %s', event);
-        },
         (error, children, stat) => {
             res.send(children);
         }
@@ -166,8 +166,6 @@ const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-
 
 app.get('/', (request, response) => {
     response.send('Hello from Express!');
@@ -207,6 +205,11 @@ var zkClient = new ZookeeperWatcher({
     root: '/',
 });
 var id = null;
+
+const kaClient = new kafka.KafkaClient({
+    kafkaHost: 'localhost:9092, localhost:9093, localhost:9094',
+
+});
 
 return zkClient.once("connected", (err) => {
     if(err) {
