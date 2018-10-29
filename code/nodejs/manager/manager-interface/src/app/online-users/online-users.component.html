@@ -1,0 +1,24 @@
+<div class="container"
+  fxLayout="column"
+  fxLayoutGap="10px">
+
+  <div fxFlex [@expand]>
+    <h2>Corporate Leadership</h2>
+    <mat-list>
+    	<mat-list-item *ngFor="let user of users">
+        <div fxFlex="70">
+      		<p matLine>{{user.id}} {{user.name}}</p>
+        </div>
+    	</mat-list-item>
+    </mat-list>
+  </div>
+
+  <div [hidden]="leaders">
+      <mat-spinner></mat-spinner> <h4>Loading . . . Please Wait</h4>
+  </div>
+  <div *ngIf="errMess">
+      <h2>Error</h2>
+      <h4>{{errMess}}</h4>
+  </div>
+
+</div>
