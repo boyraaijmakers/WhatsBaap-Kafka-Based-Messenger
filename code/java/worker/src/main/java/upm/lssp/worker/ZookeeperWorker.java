@@ -1,13 +1,10 @@
 package upm.lssp.worker;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.prefs.NodeChangeEvent;
 
 public class ZookeeperWorker {
 
@@ -40,6 +37,12 @@ public class ZookeeperWorker {
         }
     }
 
+    /**
+     * Append the user to a request node
+     * @param username
+     * @param action
+     * @return
+     */
     private String createRequest(String username, String action) {
 
         final String path = "/request/" + action + "/" + username;
