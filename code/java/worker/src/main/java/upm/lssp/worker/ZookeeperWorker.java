@@ -30,6 +30,7 @@ public class ZookeeperWorker {
             connectionLatch.await(10, TimeUnit.SECONDS);
             ZooKeeper.States state = zoo.getState();
             System.out.println(state.toString());
+
             return state.toString();
 
         } catch (Exception e) {
@@ -38,7 +39,7 @@ public class ZookeeperWorker {
     }
 
     /**
-     * Append the user to a request node
+     * Create a node with the username and append it to request
      * @param username
      * @param action
      * @return
@@ -82,6 +83,26 @@ public class ZookeeperWorker {
         }
     }
 
+    private void setStatus(String username, String status) {
+        final String path = "/"+status+"/" + username;
+
+        try {
+            zoo.create(
+                    path,
+                    null,
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *
+     * @param path
+     * @param action
+     * @param res
+     */
     private void handleWatcher(String path, String action, String res) {
         String result;
 
@@ -102,12 +123,16 @@ public class ZookeeperWorker {
             e.printStackTrace();
         }
 
-        if (result == "1" || result == "2") {
-            if(action == "enroll"){
+        if (result.equals("1") || result.equals("2")) {
+            if(action.equals("enroll")){
                 this.registered = true;
             } else {
                 this.registered = false;
             }
+
+
+            }
+
 
         }
     }
@@ -150,10 +175,13 @@ public class ZookeeperWorker {
     public boolean goOnline(String username) {
         if (zoo == null) connect();
 
-        if (checkNode("/registry/" + username) != null) {
-            return true;
+        if (checkNode("/registry/" + username) == null ) {
+            return false;
         }
-        return false;
+
+        setStatus(username,"online");
+        return true;
+
     }
 
     public void goOffline() {
