@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { OnlineUsersService } from './online-users.service';
+import { PusherService } from './pusher.service';
 
-describe('OnlineUsersService', () => {
+describe('PusherService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {
-    const service: OnlineUsersService = TestBed.get(OnlineUsersService);
+    const service: PusherService = TestBed.get(PusherService);
     expect(service).toBeTruthy();
   });
 });

@@ -1,24 +1,45 @@
 <div class="container"
-  fxLayout="column"
-  fxLayoutGap="10px">
+  fxLayout="row"
+  fxLayoutGap="20px">
 
-  <div fxFlex [@expand]>
-    <h2>Corporate Leadership</h2>
-    <mat-list>
-    	<mat-list-item *ngFor="let user of users">
-        <div fxFlex="70">
-      		<p matLine>{{user.id}} {{user.name}}</p>
-        </div>
-    	</mat-list-item>
-    </mat-list>
+  <div fxFlex>
+    <div fxLayout="column" fxLayout.gt-sm="row">
+      
+      <h1>User Status</h1>
+
+      <div fxFlex="70">
+        <mat-table #table [dataSource]="dataSource">
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef> Username </mat-header-cell>
+            <mat-cell *matCellDef="let user"> {{user.name}} </mat-cell>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <mat-header-cell *matHeaderCellDef> Status </mat-header-cell>
+            <mat-cell *matCellDef="let user">
+              <span *ngIf="user.status" class="dot green"></span>
+              <span *ngIf="!user.status" class="dot grey"></span> 
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+
+          <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+        </mat-table>
+      </div>
+
+      <div fxFlex="30">
+        <p><span class="dot grey"></span> Registered</p>
+        <p><span class="dot green"></span> Registered and Logged in</p>
+      </div>
+    </div>
   </div>
 
-  <div [hidden]="leaders">
+  <div [hidden]="users" [hidden]="errMess">
       <mat-spinner></mat-spinner> <h4>Loading . . . Please Wait</h4>
   </div>
   <div *ngIf="errMess">
       <h2>Error</h2>
       <h4>{{errMess}}</h4>
   </div>
-
 </div>

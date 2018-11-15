@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 
-import { OnlineUsersService } from '../services/online-users.service';
+import { ManagerService } from '../services/manager.service';
 import { User } from '../shared/user';
+
+import { MatTableDataSource } from '@angular/material';
 
 @Component({
   selector: 'app-online-users',
@@ -13,13 +15,17 @@ export class OnlineUsersComponent implements OnInit {
   users: User[];
   errMess: string;
 
-  constructor(private ous: OnlineUsersService) { }
+  displayedColumns = ['name', 'status'];
+  dataSource;
+
+  constructor(private ous: ManagerService) { }
 
   ngOnInit() {
 
-  	this.ous.getOnlineUsers()
-  		.subscribe(leaders => this.users = leaders,
-        errmess => this.errMess = <any>errmess.message);
-  	
+  	this.ous.getRegisteredUsers()
+  		.subscribe(users => {
+        this.users = users;
+        this.dataSource = new MatTableDataSource(this.users);
+      }, errmess => this.errMess = <any>errmess.message);
   }
 }

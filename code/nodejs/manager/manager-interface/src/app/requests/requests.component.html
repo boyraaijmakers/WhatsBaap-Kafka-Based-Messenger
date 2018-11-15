@@ -1,3 +1,41 @@
-<p>
-  requests works!
-</p>
+<div class="container"
+  fxLayout="row"
+  fxLayoutGap="20px">
+  <div fxFlex>
+    <div fxLayout="column">
+      <h1>
+        {{ title }}
+      </h1>
+
+      <h2>Pending Enrollments</h2>
+
+        <div fxFlex="50">
+          <mat-list>
+            <mat-list-item *ngFor="let user of pendingEnroll">
+              <div fxFlex="70">
+                <p matLine>{{user.name}}
+                  <button mat-button (click)="approve('enroll', user.name)">Approve</button>
+                  <button mat-button (click)="deny('enroll', user.name)">Deny</button>
+                </p>
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </div>
+
+      <h2>Pending Removals</h2>
+
+      <div fxFlex="50">
+        <mat-list>
+          <mat-list-item *ngFor="let user of pendingQuit">
+            <div fxFlex="70">
+              <p matLine>{{user.name}}
+                <button mat-button (click)="approve('quit', user.name)">Approve</button>
+                <button mat-button (click)="deny('quit', user.name)">Deny</button>
+              </p>
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+  </div>
+</div>
