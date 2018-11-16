@@ -28,7 +28,7 @@ public class ZookeeperWorker {
 
             final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
-            new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
+            zoo=new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
                 public void process(WatchedEvent we) {
                     if (we.getState() == Event.KeeperState.SyncConnected) {
                         connectionLatch.countDown();
@@ -80,7 +80,7 @@ public class ZookeeperWorker {
                     w, null);
             String result = new String(data);
 
-            if(result != "-1") {
+            if(!result.equals("-1")) {
                 handleWatcher(path, action, result);
             }
 
@@ -145,7 +145,7 @@ public class ZookeeperWorker {
         }
 
 
-    private Stat checkNode(String path){
+    public Stat checkNode(String path){
         try {
             return zoo.exists(path, false);
         } catch (Exception e) {
@@ -162,6 +162,7 @@ public class ZookeeperWorker {
         } else if (checkNode("/request/enroll/" + username) != null) {
             throw new RegistrationException(username + " already has a pending enrollment request!");
         }
+
         try {
             return createRequest(username, "enroll");
         } catch (RequestException e) {

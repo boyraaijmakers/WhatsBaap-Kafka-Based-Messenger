@@ -17,7 +17,6 @@ public class TestTools {
 
 
     public static void initializeEnv(){
-        ZookeeperWorker zk = new ZookeeperWorker();
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
             ZooKeeper zoo = new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
@@ -40,10 +39,10 @@ public class TestTools {
                         node.replaceAll(".*/", "").getBytes(),
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
-
-
             }
             connectionLatch.await(10, TimeUnit.SECONDS);
+            zoo.close();
+            assert(true);
         }catch(Exception e){
             e.printStackTrace();
             assert(false);
