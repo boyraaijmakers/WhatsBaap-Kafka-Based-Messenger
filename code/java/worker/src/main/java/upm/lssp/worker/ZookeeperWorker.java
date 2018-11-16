@@ -12,6 +12,8 @@ import java.net.ConnectException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static upm.lssp.Config.*;
+
 public class ZookeeperWorker {
 
     private ZooKeeper zoo = null;
@@ -26,7 +28,7 @@ public class ZookeeperWorker {
 
             final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
-            zoo = new ZooKeeper("localhost:2181", 1000, new Watcher() {
+            new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
                 public void process(WatchedEvent we) {
                     if (we.getState() == Event.KeeperState.SyncConnected) {
                         connectionLatch.countDown();
