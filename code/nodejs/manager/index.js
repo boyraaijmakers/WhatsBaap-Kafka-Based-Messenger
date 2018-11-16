@@ -7,7 +7,7 @@ const Pusher = require('pusher');
 
 const ZookeeperWatcher = require('zookeeper-watcher');
 
-const MANUAL_MANAGEMENT = true;
+const MANUAL_MANAGEMENT = false;
 
 var pendingRequests = { 
     "/request/enroll": [], 
@@ -117,6 +117,7 @@ function deleteKafkaTopic(user) {
 }
 
 function registerUser(user, last) {
+    console.log("Handle request");
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
@@ -235,63 +236,6 @@ function getRegisteredUsers(res) {
 }
 
 
-const app = express();
-const port = 3000;
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors());
-
-const pusher = new Pusher({
-  appId: '636509',
-  key: 'b8bc6340bc02272f30ed',
-  secret: '967f0176b9dea80c176c',
-  cluster: 'eu',
-  encrypted: true
-});
-
-app.get('/', (req, res) => {
-    res.status(200);
-    res.set("Connection", "close");
-    res.send('Hello from Express!');
-});
-
-app.get('/registeredUsers', (req, res) => {
-    console.log("Interface requests Registered Users");
-    getRegisteredUsers(res);
-});
-
-app.get('/managementMode', (req, res) => {
-    console.log("get managementMode");
-    res.status(200);
-    res.set("Connection", "close");
-    res.send(this.MANUAL_MANAGEMENT);
-});
-
-app.post('/managementMode', (req, res) => {
-    mode = req.body.mode ? "Manual" : "Automatic";
-    this.MANUAL_MANAGEMENT = req.body.mode;
-});
-
-app.post('/registerUser', (req, res) => {
-    handleRegister(req.body.name, req.body.state);
-});
-
-app.post('/removeUser', (req, res) => {
-    handleRegister(req.body.name, req.body.state);
-});
-
-app.post('/getRequests', (req, res) => {
-    pusher.trigger("lssp-manager-channel", "requests", pendingRequests);
-}) 
-
-app.listen(port, (err) => {
-    if (err) {
-        return console.log('something bad happened', err)
-    }
-    console.log(`server is listening on ${port}`)
-});
-
 var zkClient = new ZookeeperWatcher({
     hosts: ['127.0.0.1:2181'],
     root: '/',
@@ -311,3 +255,67 @@ zkClient.once("connected", (err) => {
         }
     }
 });
+
+const pusher = new Pusher({
+  appId: '636509',
+  key: 'b8bc6340bc02272f30ed',
+  secret: '967f0176b9dea80c176c',
+  cluster: 'eu',
+  encrypted: true
+});
+
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors());
+
+app.route('/')
+    .get((req, res) => {
+        res.status(200);
+        res.set("Connection", "close");
+        res.send('Hello from Express!');
+    });
+
+app.route('/registeredUsers')
+    .get((req, res) => {
+        console.log("Interface requests Registered Users");
+        getRegisteredUsers(res);
+    });
+
+app.route('/managementMode')
+    .get((req, res) => {
+        console.log("get managementMode");
+        res.status(200);
+        res.set("Connection", "close");
+        res.send(this.MANUAL_MANAGEMENT);
+    })
+    .post((req, res) => {
+        mode = req.body.mode ? "Manual" : "Automatic";
+        this.MANUAL_MANAGEMENT = req.body.mode;
+    });
+
+app.route('/registerUser')
+    .post((req, res) => {
+        handleRegister(req.body.name, req.body.state);
+    });
+
+app.route('/removeUser')
+    .post((req, res) => {
+        handleRegister(req.body.name, req.body.state);
+    });
+
+app.route('/getRequests')
+    .post((req, res) => {
+        pusher.trigger("lssp-manager-channel", "requests", pendingRequests);
+    });
+
+app.listen(port, (err) => {
+    if (err) {
+        return console.log('something bad happened', err)
+    }
+    console.log(`server is listening on ${port}`)
+});
+
+
