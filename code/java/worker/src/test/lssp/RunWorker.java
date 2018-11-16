@@ -44,19 +44,27 @@ public class RunWorker {
         //Let's re-enroll the user and register it
         enroll(testUser1);
         manager_registry(testUser1);
-
         goOnline(testUser1);
-        //manager_quit(testUser1);
+
+        //Now we close the connection, we shouldn't have the node anymore
+        TestTools.closeConnection();
+        zooWorker.goOffline();
+        TestTools.connect();
+        assertNull(zooWorker.checkNode("/online/"+testUser1));
+
+
+
 
 
         TestTools.closeConnection();
     }
 
-    private void goOnline(String testUser1) {
+
+
+    private void goOnline(String testUser1)  {
         //make a new connection
-        zooWorker.goOnline(testUser1);
-
-
+        assertTrue(zooWorker.goOnline(testUser1));
+        assertNotNull(zooWorker.checkNode("/online/"+testUser1));
     }
 
     private void manager_quit(String testUser1) {

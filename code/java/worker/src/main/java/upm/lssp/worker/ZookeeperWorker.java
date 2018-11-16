@@ -2,13 +2,11 @@ package upm.lssp.worker;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
-import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
 import upm.lssp.exceptions.RegistrationException;
 import upm.lssp.exceptions.RequestException;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -92,8 +90,8 @@ public class ZookeeperWorker {
         }
     }
 
-    private void setStatus(String username, String status) {
-        final String path = "/"+status+"/" + username;
+    private void setStatusOnline(String username) {
+        final String path = "/online/" + username;
 
         try {
             zoo.create(
@@ -196,7 +194,7 @@ public class ZookeeperWorker {
             return false;
         }
 
-        setStatus(username,"online");
+        setStatusOnline(username);
         online=true;
         return true;
 
