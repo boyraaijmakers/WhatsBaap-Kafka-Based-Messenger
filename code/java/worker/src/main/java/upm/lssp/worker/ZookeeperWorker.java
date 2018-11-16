@@ -26,7 +26,7 @@ public class ZookeeperWorker {
 
     private String connect() {
 
-            final CountDownLatch connectionLatch = new CountDownLatch(1);
+        final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
             zoo=new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
                 public void process(WatchedEvent we) {
@@ -61,6 +61,7 @@ public class ZookeeperWorker {
         final String path = "/request/" + action + "/" + username;
 
         try {
+
             zoo.create(
                     path,
                     "-1".getBytes(),
@@ -71,7 +72,7 @@ public class ZookeeperWorker {
                 public void process(WatchedEvent we) {
                     if(we.getType() == Event.EventType.NodeDataChanged) {
 
-                            handleWatcher(we.getPath(), path.split("/")[2], null);
+                        handleWatcher(we.getPath(), path.split("/")[2], null);
                     }
                 }
             };
@@ -139,10 +140,10 @@ public class ZookeeperWorker {
             }
 
 
-            }
-
-
         }
+
+
+    }
 
 
     public Stat checkNode(String path){
