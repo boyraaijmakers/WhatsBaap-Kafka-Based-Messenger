@@ -2,13 +2,11 @@ package upm.lssp.worker;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
-import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
 import upm.lssp.exceptions.RegistrationException;
 import upm.lssp.exceptions.RequestException;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +24,7 @@ public class ZookeeperWorker {
 
     private String connect() {
 
-            final CountDownLatch connectionLatch = new CountDownLatch(1);
+        final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
             zoo=new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
                 public void process(WatchedEvent we) {
@@ -61,6 +59,7 @@ public class ZookeeperWorker {
         final String path = "/request/" + action + "/" + username;
 
         try {
+
             zoo.create(
                     path,
                     "-1".getBytes(),
@@ -71,7 +70,7 @@ public class ZookeeperWorker {
                 public void process(WatchedEvent we) {
                     if(we.getType() == Event.EventType.NodeDataChanged) {
 
-                            handleWatcher(we.getPath(), path.split("/")[2], null);
+                        handleWatcher(we.getPath(), path.split("/")[2], null);
                     }
                 }
             };
@@ -91,8 +90,8 @@ public class ZookeeperWorker {
         }
     }
 
-    private void setStatus(String username, String status) {
-        final String path = "/"+status+"/" + username;
+    private void setStatusOnline(String username) {
+        final String path = "/online/" + username;
 
         try {
             zoo.create(
@@ -139,10 +138,10 @@ public class ZookeeperWorker {
             }
 
 
-            }
-
-
         }
+
+
+    }
 
 
     public Stat checkNode(String path){
@@ -195,7 +194,7 @@ public class ZookeeperWorker {
             return false;
         }
 
-        setStatus(username,"online");
+        setStatusOnline(username);
         online=true;
         return true;
 
