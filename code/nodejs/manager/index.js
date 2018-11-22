@@ -7,12 +7,17 @@ const Pusher = require('pusher');
 
 const ZookeeperWatcher = require('zookeeper-watcher');
 
-const MANUAL_MANAGEMENT = true;
+const MANUAL_MANAGEMENT = false;
 
 var pendingRequests = { 
     "/request/enroll": [], 
     "/request/quit": []
 };
+
+function managerLog(message) {
+    var time = new Date()
+    console.log("[" + time.toUTCString() + "]  " + message)
+}
 
 function createZkTreeStructure () {
 
@@ -28,7 +33,7 @@ function createZkTreeStructure () {
         });
     }
 
-    console.log("Initial structure created!");
+    managerLog("Initial structure created!");
 
     return true;
 }
@@ -40,7 +45,7 @@ function setWatchers() {
 
     for(var i in watchPaths) {
         watcher(watchPaths[i]);
-        console.log("Now watching children of " + watchPaths[i]);
+        managerLog("Now watching children of " + watchPaths[i]);
     }
 }
 
@@ -74,9 +79,10 @@ function handleWatcherResult(path, child, last) {
 function loginUser(user) {
     zkClient.exists('/registry/' + user, (err, stat) => {
         if(stat) {
+            managerLog(user + " is now logged in!");
             createKafkaTopic(user);
         } else{
-            console.log("Attempt of unregistered user " + user + " to log in! Removing it now...");
+            managerLog("Attempt of unregistered user " + user + " to log in! Removing it now...");
             zkClient.remove(
                 "/online/" + user, 
                 (err) => {
@@ -87,10 +93,11 @@ function loginUser(user) {
 }
 
 function createKafkaTopic(user) {
-    zkClient.exists('/topic/' + user, (err, stat) => {
+    zkClient.exists("/brokers/topics/" + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 1) {
+            managerLog("It's " + user + "'s first time here. Let me give him a topic!")
             zkClient.create(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -102,10 +109,11 @@ function createKafkaTopic(user) {
 }
 
 function deleteKafkaTopic(user) {
-    zkClient.exists('/topic/' + user, (err, stat) => {
+    zkClient.exists("/brokers/topics/" + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 2) {
+            managerLog("Goodbye " + user + "... Removing the topic.");
             zkClient.remove(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -117,6 +125,8 @@ function deleteKafkaTopic(user) {
 }
 
 function registerUser(user, last) {
+    managerLog("Handle register request for new user " + user + "!");
+
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
@@ -152,7 +162,7 @@ function handleRegister(user, state) {
         -1,
         (err, stat) => {
             if (err) {
-                console.log(err.stack);
+                managerLog(err.stack);
                 return;
             }
         }
@@ -162,6 +172,8 @@ function handleRegister(user, state) {
 }
 
 function removeUser(user, last) {
+    managerLog("Handle quit request for user " + user + "!");
+
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 1 : 2; 
 
@@ -194,7 +206,8 @@ function handleQuit(user, state) {
         -1,
         (err, stat) => {
             if (err) {
-                console.log(err.stack);
+                managerLog(err.stack);
+                managerLog("Deze error");
                 return;
             }
         }
@@ -235,63 +248,6 @@ function getRegisteredUsers(res) {
 }
 
 
-const app = express();
-const port = 3000;
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors());
-
-const pusher = new Pusher({
-  appId: '636509',
-  key: 'b8bc6340bc02272f30ed',
-  secret: '967f0176b9dea80c176c',
-  cluster: 'eu',
-  encrypted: true
-});
-
-app.get('/', (req, res) => {
-    res.status(200);
-    res.set("Connection", "close");
-    res.send('Hello from Express!');
-});
-
-app.get('/registeredUsers', (req, res) => {
-    console.log("Interface requests Registered Users");
-    getRegisteredUsers(res);
-});
-
-app.get('/managementMode', (req, res) => {
-    console.log("get managementMode");
-    res.status(200);
-    res.set("Connection", "close");
-    res.send(this.MANUAL_MANAGEMENT);
-});
-
-app.post('/managementMode', (req, res) => {
-    mode = req.body.mode ? "Manual" : "Automatic";
-    this.MANUAL_MANAGEMENT = req.body.mode;
-});
-
-app.post('/registerUser', (req, res) => {
-    handleRegister(req.body.name, req.body.state);
-});
-
-app.post('/removeUser', (req, res) => {
-    handleRegister(req.body.name, req.body.state);
-});
-
-app.post('/getRequests', (req, res) => {
-    pusher.trigger("lssp-manager-channel", "requests", pendingRequests);
-}) 
-
-app.listen(port, (err) => {
-    if (err) {
-        return console.log('something bad happened', err)
-    }
-    console.log(`server is listening on ${port}`)
-});
-
 var zkClient = new ZookeeperWatcher({
     hosts: ['127.0.0.1:2181'],
     root: '/',
@@ -299,9 +255,9 @@ var zkClient = new ZookeeperWatcher({
 
 zkClient.once("connected", (err) => {
     if(err) {
-        console.log(err);
+        managerLog(err);
     } else {
-        console.log("Connected!");
+        managerLog("Connected to Zookeeper!");
 
         if(createZkTreeStructure()) {
             result = true;
@@ -311,3 +267,54 @@ zkClient.once("connected", (err) => {
         }
     }
 });
+
+const pusher = new Pusher({
+  appId: '636509',
+  key: 'b8bc6340bc02272f30ed',
+  secret: '967f0176b9dea80c176c',
+  cluster: 'eu',
+  encrypted: true
+});
+
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(cors());
+
+app.route('/')
+    .get((req, res) => {
+        res.status(200);
+        res.set("Connection", "close");
+        res.send('Hello from Express!');
+    });
+
+app.route('/registeredUsers')
+    .get((req, res) => {
+        getRegisteredUsers(res);
+    });
+
+app.route('/registerUser')
+    .post((req, res) => {
+        handleRegister(req.body.name, req.body.state);
+    });
+
+app.route('/removeUser')
+    .post((req, res) => {
+        handleRegister(req.body.name, req.body.state);
+    });
+
+app.route('/getRequests')
+    .post((req, res) => {
+        pusher.trigger("lssp-manager-channel", "requests", pendingRequests);
+    });
+
+app.listen(port, (err) => {
+    if (err) {
+        return managerLog('something bad happened', err)
+    }
+    managerLog(`server is listening on ${port}`)
+});
+
+

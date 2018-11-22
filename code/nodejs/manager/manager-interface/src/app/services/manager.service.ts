@@ -29,12 +29,4 @@ export class ManagerService {
   handleQuit(req): any {
   	this.restangular.all('removeUser').post(req);
   }
-
-  getManagementMode(): any {
-    return this.restangular.all('managementMode').get();
-  }
-
-  setManagementMode(req): any {
-    this.restangular.all('managementMode').post(req);
-  }
 }

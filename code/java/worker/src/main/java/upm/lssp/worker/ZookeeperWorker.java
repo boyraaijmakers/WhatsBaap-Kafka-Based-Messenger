@@ -136,11 +136,9 @@ public class ZookeeperWorker {
             } else {
                 this.registered = false;
             }
-
-
         }
 
-
+        System.out.println("Handled request " + path + "!");
     }
 
 
@@ -206,6 +204,7 @@ public class ZookeeperWorker {
         try {
             online=false;
             zoo.close();
+            zoo = null;
         } catch (InterruptedException e) {
 
         }
@@ -225,7 +224,7 @@ public class ZookeeperWorker {
 
         try {
             if (checkNode("/online/" + username) != null) {
-                zoo.getChildren("/online", false);
+                return zoo.getChildren("/online", false).toString();
             } else {
                 return "Only online users see other online users";
             }
