@@ -14,6 +14,11 @@ var pendingRequests = {
     "/request/quit": []
 };
 
+function managerLog(message) {
+    var time = new Date()
+    console.log("[" + time.toUTCString() + "]  " + message)
+}
+
 function createZkTreeStructure () {
 
     structure = ["/request", 
@@ -28,7 +33,7 @@ function createZkTreeStructure () {
         });
     }
 
-    console.log("Initial structure created!");
+    managerLog("Initial structure created!");
 
     return true;
 }
@@ -40,7 +45,7 @@ function setWatchers() {
 
     for(var i in watchPaths) {
         watcher(watchPaths[i]);
-        console.log("Now watching children of " + watchPaths[i]);
+        managerLog("Now watching children of " + watchPaths[i]);
     }
 }
 
@@ -74,10 +79,10 @@ function handleWatcherResult(path, child, last) {
 function loginUser(user) {
     zkClient.exists('/registry/' + user, (err, stat) => {
         if(stat) {
-            console.log(user + " is now logged in!");
+            managerLog(user + " is now logged in!");
             createKafkaTopic(user);
         } else{
-            console.log("Attempt of unregistered user " + user + " to log in! Removing it now...");
+            managerLog("Attempt of unregistered user " + user + " to log in! Removing it now...");
             zkClient.remove(
                 "/online/" + user, 
                 (err) => {
@@ -92,7 +97,7 @@ function createKafkaTopic(user) {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 1) {
-            console.log("It's " + user + "'s first time here. Let me give him a topic!")
+            managerLog("It's " + user + "'s first time here. Let me give him a topic!")
             zkClient.create(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -108,7 +113,7 @@ function deleteKafkaTopic(user) {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 2) {
-            console.log("Goodbye " + user + "... Removing the topic.");
+            managerLog("Goodbye " + user + "... Removing the topic.");
             zkClient.remove(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -120,7 +125,7 @@ function deleteKafkaTopic(user) {
 }
 
 function registerUser(user, last) {
-    console.log("Handle register request for new user " + user + "!");
+    managerLog("Handle register request for new user " + user + "!");
 
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
@@ -157,7 +162,7 @@ function handleRegister(user, state) {
         -1,
         (err, stat) => {
             if (err) {
-                console.log(err.stack);
+                managerLog(err.stack);
                 return;
             }
         }
@@ -167,7 +172,7 @@ function handleRegister(user, state) {
 }
 
 function removeUser(user, last) {
-    console.log("Handle quit request for user " + user + "!");
+    managerLog("Handle quit request for user " + user + "!");
 
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 1 : 2; 
@@ -201,8 +206,8 @@ function handleQuit(user, state) {
         -1,
         (err, stat) => {
             if (err) {
-                console.log(err.stack);
-                console.log("Deze error");
+                managerLog(err.stack);
+                managerLog("Deze error");
                 return;
             }
         }
@@ -250,9 +255,9 @@ var zkClient = new ZookeeperWatcher({
 
 zkClient.once("connected", (err) => {
     if(err) {
-        console.log(err);
+        managerLog(err);
     } else {
-        console.log("Connected!");
+        managerLog("Connected to Zookeeper!");
 
         if(createZkTreeStructure()) {
             result = true;
@@ -287,7 +292,6 @@ app.route('/')
 
 app.route('/registeredUsers')
     .get((req, res) => {
-        console.log("Interface requests Registered Users");
         getRegisteredUsers(res);
     });
 
@@ -308,9 +312,9 @@ app.route('/getRequests')
 
 app.listen(port, (err) => {
     if (err) {
-        return console.log('something bad happened', err)
+        return managerLog('something bad happened', err)
     }
-    console.log(`server is listening on ${port}`)
+    managerLog(`server is listening on ${port}`)
 });
 
 
