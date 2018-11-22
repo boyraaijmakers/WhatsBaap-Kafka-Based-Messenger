@@ -3,7 +3,6 @@ package lssp;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
-import org.apache.zookeeper.ZooKeeper;
 import org.junit.Test;
 
 import upm.lssp.exceptions.QuitException;
@@ -108,6 +107,7 @@ public class RunWorker {
 
 
     }
+
     private void doubleEnrollingPrevention(String user) {
         System.out.println("--> doubleEnrolling test");
         try {
