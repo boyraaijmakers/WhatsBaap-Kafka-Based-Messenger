@@ -21,7 +21,6 @@ export class RequestsComponent implements OnInit {
     this.pusherService.channel.bind('requests', data => {
       this.pendingEnroll = data["/request/enroll"];
       this.pendingQuit = data["/request/quit"];
-      console.log(data);
     });
 
     this.managerService.getRequests();
@@ -39,6 +38,9 @@ export class RequestsComponent implements OnInit {
         state: 1
       });
     }
+
+    console.log(this.pendingEnroll);
+    console.log(this.pendingQuit);
   }
 
   deny(action: string, user: string) {
@@ -53,5 +55,8 @@ export class RequestsComponent implements OnInit {
         state: 0
       });
     }
+
+    console.log(this.pendingEnroll);
+    console.log(this.pendingQuit);
   }
 }

@@ -74,6 +74,7 @@ function handleWatcherResult(path, child, last) {
 function loginUser(user) {
     zkClient.exists('/registry/' + user, (err, stat) => {
         if(stat) {
+            console.log(user + " is now logged in!");
             createKafkaTopic(user);
         } else{
             console.log("Attempt of unregistered user " + user + " to log in! Removing it now...");
@@ -87,10 +88,11 @@ function loginUser(user) {
 }
 
 function createKafkaTopic(user) {
-    zkClient.exists('/topic/' + user, (err, stat) => {
+    zkClient.exists("/brokers/topics/" + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 1) {
+            console.log("It's " + user + "'s first time here. Let me give him a topic!")
             zkClient.create(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -102,10 +104,11 @@ function createKafkaTopic(user) {
 }
 
 function deleteKafkaTopic(user) {
-    zkClient.exists('/topic/' + user, (err, stat) => {
+    zkClient.exists("/brokers/topics/" + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
         if(newState == 2) {
+            console.log("Goodbye " + user + "... Removing the topic.");
             zkClient.remove(
                 "/brokers/topics/" + user, 
                 (err) => {
@@ -117,7 +120,8 @@ function deleteKafkaTopic(user) {
 }
 
 function registerUser(user, last) {
-    console.log("Handle request");
+    console.log("Handle register request for new user " + user + "!");
+
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 2 : 1; 
 
@@ -163,6 +167,8 @@ function handleRegister(user, state) {
 }
 
 function removeUser(user, last) {
+    console.log("Handle quit request for user " + user + "!");
+
     zkClient.exists('/registry/' + user, (err, stat) => {
         newState = (err) ? 0 : (stat) ? 1 : 2; 
 
@@ -196,6 +202,7 @@ function handleQuit(user, state) {
         (err, stat) => {
             if (err) {
                 console.log(err.stack);
+                console.log("Deze error");
                 return;
             }
         }
@@ -282,18 +289,6 @@ app.route('/registeredUsers')
     .get((req, res) => {
         console.log("Interface requests Registered Users");
         getRegisteredUsers(res);
-    });
-
-app.route('/managementMode')
-    .get((req, res) => {
-        console.log("get managementMode");
-        res.status(200);
-        res.set("Connection", "close");
-        res.send(this.MANUAL_MANAGEMENT);
-    })
-    .post((req, res) => {
-        mode = req.body.mode ? "Manual" : "Automatic";
-        this.MANUAL_MANAGEMENT = req.body.mode;
     });
 
 app.route('/registerUser')
