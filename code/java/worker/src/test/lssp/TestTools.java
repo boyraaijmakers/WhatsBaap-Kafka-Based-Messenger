@@ -2,13 +2,13 @@ package lssp;
 
 import org.apache.zookeeper.*;
 
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static upm.lssp.Config.*;
+import static upm.lssp.Config.ZKSERVER;
+import static upm.lssp.Config.ZKSESSIONTIME;
 
 public class TestTools {
 
@@ -41,13 +41,8 @@ public class TestTools {
     }
 
     protected static void initializeEnv(){
-
         for (String node: structure) {
-
             deleteNode(node);
-
-
-
             makeNode(node,node.replaceAll(".*/", ""));
 
         }

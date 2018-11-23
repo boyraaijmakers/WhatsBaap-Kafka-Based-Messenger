@@ -1,6 +1,6 @@
 package upm.lssp.exceptions;
 
-public class QuitException extends Throwable {
+public class QuitException extends GenericException {
 
 
     public QuitException(String s) {

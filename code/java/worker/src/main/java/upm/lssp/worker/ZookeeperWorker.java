@@ -1,7 +1,10 @@
 package upm.lssp.worker;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
 import upm.lssp.exceptions.RegistrationException;
 import upm.lssp.exceptions.RequestException;
@@ -18,11 +21,13 @@ public class ZookeeperWorker {
     private Boolean registered = false;
     private Boolean online = false;
 
-    public ZookeeperWorker() {
+    public ZookeeperWorker() throws ConnectionException {
+        BasicConfigurator.configure();
+        org.apache.log4j.Logger.getRootLogger().setLevel(Level.FATAL);
         connect();
     }
 
-    private String connect() {
+    private String connect() throws ConnectionException {
 
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
@@ -34,13 +39,13 @@ public class ZookeeperWorker {
                 }
             });
         } catch (IOException e) {
-            return(e.getMessage());
+            throw new ConnectionException(e.getMessage());
         }
 
         try {
-            connectionLatch.await(10, TimeUnit.SECONDS);
+            connectionLatch.await(3, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            return(e.getMessage());
+            throw new ConnectionException(e.getMessage());
         }
 
         ZooKeeper.States state = zoo.getState();
@@ -152,12 +157,13 @@ public class ZookeeperWorker {
 
     public boolean register(String username) throws RegistrationException {
 
-        if (zoo == null) connect();
+        //if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) != null ) {
-            throw new RegistrationException(username + " is already registered!");
+            if (DEBUG) System.out.printf(username + " is already registered! Passing to online");
+            goOnline(username);
         } else if (checkNode("/request/enroll/" + username) != null) {
-            throw new RegistrationException(username + " already has a pending enrollment request!");
+            throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
         }
 
         try {
@@ -169,7 +175,7 @@ public class ZookeeperWorker {
     }
 
     public boolean quit(String username) throws QuitException {
-        if (zoo == null) connect();
+        //if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null ) {
             throw new QuitException(username + " is not registered!");
@@ -186,7 +192,7 @@ public class ZookeeperWorker {
     }
 
     public boolean goOnline(String username) {
-        if (zoo == null) connect();
+        //if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null ) {
             return false;
@@ -199,30 +205,33 @@ public class ZookeeperWorker {
     }
 
     public void goOffline() {
-        if (zoo == null) connect();
+
 
         try {
+            if (zoo == null) connect();
             online=false;
             zoo.close();
             zoo = null;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
+
 
         }
     }
 
     public void sendMessage() {
-        if (zoo == null) connect();
+        //if (zoo == null) connect();
 
     }
 
     public void readMessages() {
-        if (zoo == null) connect();
+        //if (zoo == null) connect();
     }
 
     public String getOnlineUsers(String username) {
-        if (zoo == null) connect();
+
 
         try {
+            if (zoo == null) connect();
             if (checkNode("/online/" + username) != null) {
                 return zoo.getChildren("/online", false).toString();
             } else {

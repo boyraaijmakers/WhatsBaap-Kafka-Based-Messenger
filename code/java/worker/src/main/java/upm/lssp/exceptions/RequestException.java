@@ -1,6 +1,6 @@
 package upm.lssp.exceptions;
 
-public class RequestException extends Throwable {
+public class RequestException extends GenericException {
 
 
     public RequestException(String s) {

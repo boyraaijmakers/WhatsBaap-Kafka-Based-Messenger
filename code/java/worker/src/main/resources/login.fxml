@@ -9,7 +9,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="450.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="upm.lssp.ui.LoginController">
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="450.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8"
+            fx:controller="upm.lssp.ui.ActionController">
    <children>
       <VBox>
          <children>
@@ -32,7 +33,7 @@
             <VBox alignment="TOP_CENTER" prefHeight="122.0" prefWidth="400.0">
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Welcome to the best chat ever, even better than Telegram" wrappingWidth="365.88323974609375" />
-                  <VBox alignment="CENTER" prefHeight="70.0" prefWidth="400.0">
+                   <VBox alignment="CENTER" prefHeight="100.0" prefWidth="400.0">
                      <children>
                         <TextField fx:id="username" maxWidth="-Infinity" prefWidth="190.0" text="Username">
                            <opaqueInsets>
@@ -59,14 +60,14 @@
                <children>
                   <HBox alignment="TOP_CENTER">
                      <children>
-                        <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+                         <ImageView fitHeight="83.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
                            <image>
                               <Image url="@assets/zk.png" />
                            </image>
                         </ImageView>
                      </children>
                   </HBox>
-                  <HBox prefHeight="100.0" prefWidth="200.0">
+                   <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                      <children>
                         <ImageView fitHeight="76.0" fitWidth="157.0" pickOnBounds="true" preserveRatio="true">
                            <image>

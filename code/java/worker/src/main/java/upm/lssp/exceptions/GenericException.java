@@ -1,6 +1,6 @@
 package upm.lssp.exceptions;
 
-public class GenericException extends Throwable {
+public class GenericException extends Exception {
 
     private final String message;
 

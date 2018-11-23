@@ -1,6 +1,6 @@
 package upm.lssp.exceptions;
 
-public class RegistrationException extends Throwable {
+public class RegistrationException extends GenericException {
 
 
     public RegistrationException(String s) {

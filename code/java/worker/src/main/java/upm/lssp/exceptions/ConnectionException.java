@@ -1,6 +1,6 @@
 package upm.lssp.exceptions;
 
-public class ConnectionException extends Throwable {
+public class ConnectionException extends GenericException {
 
 
     public ConnectionException(String s) {

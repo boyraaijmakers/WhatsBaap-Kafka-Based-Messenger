@@ -4,7 +4,7 @@ package lssp;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.junit.Test;
-
+import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
 import upm.lssp.exceptions.RegistrationException;
 import upm.lssp.worker.ZookeeperWorker;
@@ -17,7 +17,14 @@ public class RunWorker {
     private static ZookeeperWorker zooWorker = null;
 
     private void setZooWorker(){
-        if(zooWorker==null) zooWorker=new ZookeeperWorker();
+        if (zooWorker == null) {
+            try {
+                zooWorker = new ZookeeperWorker();
+            } catch (ConnectionException e) {
+                e.printStackTrace();
+                assert (false);
+            }
+        }
     }
 
 

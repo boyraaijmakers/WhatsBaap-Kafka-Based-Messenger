@@ -11,7 +11,6 @@ import javafx.stage.Stage;
 public class RunWorker extends Application implements Runnable {
 
     public void start(Stage stage) throws Exception {
-
         Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("login.fxml"));
         stage.setTitle("WhatsBaap");
         stage.setScene(new Scene(root));
