@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="677.0" prefWidth="868.0" xmlns="http://javafx.com/javafx/8"
+            fx:controller="upm.lssp.ui.ActionController">
+    <children>
+        <SplitPane dividerPositions="0.29445727482678985" layoutY="53.0" prefHeight="626.0" prefWidth="868.0">
+            <items>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="632.0" prefWidth="248.0">
+                    <children>
+                        <VBox alignment="CENTER" prefHeight="31.0" prefWidth="251.0"/>
+                        <ScrollPane layoutY="-2.0" prefHeight="626.0" prefWidth="251.0">
+                            <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="608.0" prefWidth="251.0">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="251.0"
+                                              style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
+                                            <children>
+                                                <Circle fill="#3d972b" radius="16.0" stroke="WHITE" strokeType="INSIDE">
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </Circle>
+                                                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                                                    <children>
+                                                        <Text strokeType="OUTSIDE" strokeWidth="0.0"
+                                                              text="Boy Username">
+                                                            <font>
+                                                                <Font name="Avenir Light Oblique" size="19.0"/>
+                                                            </font>
+                                                        </Text>
+                                                    </children>
+                                                    <opaqueInsets>
+                                                        <Insets/>
+                                                    </opaqueInsets>
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </HBox>
+                                            </children>
+                                            <opaqueInsets>
+                                                <Insets/>
+                                            </opaqueInsets>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" layoutY="52.0" prefHeight="52.0" prefWidth="251.0"
+                                              style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
+                                            <children>
+                                                <Circle fill="#962c2c" radius="16.0" stroke="WHITE" strokeType="INSIDE">
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </Circle>
+                                                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                                                    <children>
+                                                        <Text strokeType="OUTSIDE" strokeWidth="0.0"
+                                                              text="Boy Username">
+                                                            <font>
+                                                                <Font name="Avenir Light Oblique" size="19.0"/>
+                                                            </font>
+                                                        </Text>
+                                                    </children>
+                                                    <opaqueInsets>
+                                                        <Insets/>
+                                                    </opaqueInsets>
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </HBox>
+                                            </children>
+                                            <opaqueInsets>
+                                                <Insets/>
+                                            </opaqueInsets>
+                                        </HBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </AnchorPane>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="515.0" prefWidth="456.0">
+                    <children>
+                        <ScrollPane layoutX="-5.0" layoutY="-25.0" prefHeight="604.0" prefWidth="618.0">
+                            <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0"/>
+                            </content>
+                        </ScrollPane>
+                        <VBox alignment="CENTER" layoutX="-5.0" layoutY="581.0" prefHeight="38.0" prefWidth="616.0">
+                            <children>
+                                <TextField maxWidth="550.0" prefHeight="34.0" prefWidth="550.0"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+            </items>
+        </SplitPane>
+        <HBox alignment="CENTER" prefHeight="54.0" prefWidth="251.0">
+            <children>
+                <ImageView fitHeight="52.0" fitWidth="199.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@assets/logo.png"/>
+                    </image>
+                </ImageView>
+            </children>
+        </HBox>
+        <HBox alignment="CENTER_LEFT" layoutX="251.0" prefHeight="52.0" prefWidth="618.0">
+            <children>
+                <Circle fill="#3d972b" radius="18.0" stroke="WHITE" strokeType="INSIDE">
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </Circle>
+                <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="404.0">
+                    <children>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Phil Username">
+                            <font>
+                                <Font name="Avenir Light Oblique" size="23.0"/>
+                            </font>
+                        </Text>
+                    </children>
+                    <opaqueInsets>
+                        <Insets/>
+                    </opaqueInsets>
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </HBox>
+                <ToggleButton mnemonicParsing="false" text="Go Offline">
+                    <HBox.margin>
+                        <Insets right="10.0"/>
+                    </HBox.margin>
+                </ToggleButton>
+                <Button mnemonicParsing="false" text="Quit"/>
+            </children>
+            <opaqueInsets>
+                <Insets/>
+            </opaqueInsets>
+        </HBox>
+    </children>
+</AnchorPane>
