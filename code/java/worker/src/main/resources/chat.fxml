@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.shape.*?>
 <?import javafx.geometry.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.text.*?>
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.*?>
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="677.0" prefWidth="868.0" xmlns="http://javafx.com/javafx/8"
-            fx:controller="upm.lssp.ui.ActionController">
+            fx:controller="upm.lssp.ui.ChatUIController">
     <children>
         <SplitPane dividerPositions="0.29445727482678985" layoutY="53.0" prefHeight="626.0" prefWidth="868.0">
             <items>
@@ -20,7 +18,7 @@
                         <VBox alignment="CENTER" prefHeight="31.0" prefWidth="251.0"/>
                         <ScrollPane layoutY="-2.0" prefHeight="626.0" prefWidth="251.0">
                             <content>
-                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="608.0" prefWidth="251.0">
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="608.0" prefWidth="246.0">
                                     <children>
                                         <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="251.0"
                                               style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
@@ -45,6 +43,9 @@
                                                     <HBox.margin>
                                                         <Insets left="10.0"/>
                                                     </HBox.margin>
+                                                    <cursor>
+                                                        <Cursor fx:constant="HAND"/>
+                                                    </cursor>
                                                 </HBox>
                                             </children>
                                             <opaqueInsets>
@@ -74,6 +75,9 @@
                                                     <HBox.margin>
                                                         <Insets left="10.0"/>
                                                     </HBox.margin>
+                                                    <cursor>
+                                                        <Cursor fx:constant="HAND"/>
+                                                    </cursor>
                                                 </HBox>
                                             </children>
                                             <opaqueInsets>
@@ -133,12 +137,13 @@
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </HBox>
-                <ToggleButton mnemonicParsing="false" text="Go Offline">
+                <Button mnemonicParsing="false" text="Go Offline">
+
                     <HBox.margin>
                         <Insets right="10.0"/>
                     </HBox.margin>
-                </ToggleButton>
-                <Button mnemonicParsing="false" text="Quit"/>
+                </Button>
+                <Button mnemonicParsing="false" onAction="#quit" text="Quit"/>
             </children>
             <opaqueInsets>
                 <Insets/>

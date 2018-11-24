@@ -4,10 +4,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
-import upm.lssp.exceptions.ConnectionException;
-import upm.lssp.exceptions.QuitException;
-import upm.lssp.exceptions.RegistrationException;
-import upm.lssp.exceptions.RequestException;
+import upm.lssp.exceptions.*;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -155,13 +152,13 @@ public class ZookeeperWorker {
         }
     }
 
-    public boolean register(String username) throws RegistrationException {
+    public boolean register(String username) throws GenericException {
 
-        //if (zoo == null) connect();
-
+        if (zoo == null) connect();
         if (checkNode("/registry/" + username) != null ) {
             if (DEBUG) System.out.printf(username + " is already registered! Passing to online");
             goOnline(username);
+            return true;
         } else if (checkNode("/request/enroll/" + username) != null) {
             throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
         }
@@ -174,8 +171,8 @@ public class ZookeeperWorker {
 
     }
 
-    public boolean quit(String username) throws QuitException {
-        //if (zoo == null) connect();
+    public boolean quit(String username) throws GenericException {
+        if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null ) {
             throw new QuitException(username + " is not registered!");

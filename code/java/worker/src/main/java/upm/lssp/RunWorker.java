@@ -1,22 +1,28 @@
 package upm.lssp;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
-
+import upm.lssp.exceptions.ConnectionException;
+import upm.lssp.ui.UserUIController;
+import upm.lssp.worker.ZookeeperWorker;
 
 
 public class RunWorker extends Application implements Runnable {
 
-    public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("login.fxml"));
-        stage.setTitle("WhatsBaap");
-        stage.setScene(new Scene(root));
-        stage.show();
-        if(Config.DEBUG) System.out.println("UI Loaded");
+    public void start(Stage stage) {
 
+        if (Config.DEBUG) System.out.println("Welcome! Loading UI...");
+        View.setStage(stage);
+        try {
+            View.setZooWorker(new ZookeeperWorker());
+        } catch (ConnectionException e) {
+            View.error(e.getMessage());
+        }
+
+        View.setController(new UserUIController());
+
+
+        if (Config.DEBUG) System.out.println("UIController Loaded");
 
     }
 
