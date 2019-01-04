@@ -60,6 +60,9 @@ public class ZookeeperWorker {
 
         final String path = "/request/" + action + "/" + username;
 
+        if (DEBUG) {
+            System.out.println("Request: " + path);
+        }
 
         try {
 
@@ -73,7 +76,6 @@ public class ZookeeperWorker {
                 public void process(WatchedEvent we) {
                     if(we.getType() == Event.EventType.NodeDataChanged) {
 
-
                         handleWatcher(we.getPath(), path.split("/")[2], null);
                     }
                 }
@@ -82,15 +84,14 @@ public class ZookeeperWorker {
 
             String result = new String(zoo.getData("/request/" + action + "/" + username, w, null));
 
+            TimeUnit.SECONDS.sleep(2);
 
-            int count = 0;
-            while (count < 4) {
-                System.out.println("Result:" + result);
-                if (checkNode("/request/" + action + "/" + username) == null || result.equals(("1"))) {
-                    return true;
-                }
-                count++;
-                TimeUnit.SECONDS.sleep(1);
+            if (checkNode("/request/" + action + "/" + username) == null) {
+                System.out.println("R: " + result);
+                return true;
+            } else if (!result.equals(("-1"))) {
+                handleWatcher(path, action, result);
+                return true;
             }
 
 
@@ -125,7 +126,6 @@ public class ZookeeperWorker {
      */
     private void handleWatcher(String path, String action, String res) {
         String result;
-        System.out.println("Handle");
         if(res == null) {
             try {
                 result =  new String(zoo.getData(path, false, null));
@@ -140,7 +140,6 @@ public class ZookeeperWorker {
         try {
 
             zoo.delete(path, -1);
-            System.out.println("Del: " + path);
         } catch (Exception e) {
             e.printStackTrace();
         }
