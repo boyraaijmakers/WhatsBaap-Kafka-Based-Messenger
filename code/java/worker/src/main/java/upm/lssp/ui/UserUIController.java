@@ -24,6 +24,7 @@ public class UserUIController extends UIController {
         boolean status = false;
         try {
             status = View.login(username.getText());
+
         } catch (RegistrationException e) {
             this.showError(e.getMessage());
         } catch (Exception e) {

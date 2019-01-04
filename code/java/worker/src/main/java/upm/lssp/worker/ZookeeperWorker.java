@@ -60,6 +60,7 @@ public class ZookeeperWorker {
 
         final String path = "/request/" + action + "/" + username;
 
+
         try {
 
             zoo.create(
@@ -72,25 +73,35 @@ public class ZookeeperWorker {
                 public void process(WatchedEvent we) {
                     if(we.getType() == Event.EventType.NodeDataChanged) {
 
+
                         handleWatcher(we.getPath(), path.split("/")[2], null);
                     }
                 }
             };
 
-            byte[] data =  zoo.getData("/request/" + action + "/" + username,
-                    w, null);
-            String result = new String(data);
 
-            if(!result.equals("-1")) {
-                handleWatcher(path, action, result);
+            String result = new String(zoo.getData("/request/" + action + "/" + username, w, null));
+
+
+            int count = 0;
+            while (count < 4) {
+                System.out.println("Result:" + result);
+                if (checkNode("/request/" + action + "/" + username) == null || result.equals(("1"))) {
+                    return true;
+                }
+                count++;
+                TimeUnit.SECONDS.sleep(1);
             }
 
-            return true;
+
+            throw new RequestException("The manager didn't handle the request. Check that the manager is working and try again");
+
 
         } catch (Exception e) {
             throw new RequestException(e.getMessage());
         }
     }
+
 
     private void setStatusOnline(String username) {
         final String path = "/online/" + username;
@@ -114,7 +125,7 @@ public class ZookeeperWorker {
      */
     private void handleWatcher(String path, String action, String res) {
         String result;
-
+        System.out.println("Handle");
         if(res == null) {
             try {
                 result =  new String(zoo.getData(path, false, null));
@@ -127,7 +138,9 @@ public class ZookeeperWorker {
         }
 
         try {
+
             zoo.delete(path, -1);
+            System.out.println("Del: " + path);
         } catch (Exception e) {
             e.printStackTrace();
         }

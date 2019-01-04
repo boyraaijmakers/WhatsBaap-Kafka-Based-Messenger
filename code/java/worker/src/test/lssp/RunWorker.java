@@ -5,7 +5,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.junit.Test;
 import upm.lssp.exceptions.ConnectionException;
-import upm.lssp.exceptions.QuitException;
+import upm.lssp.exceptions.GenericException;
 import upm.lssp.exceptions.RegistrationException;
 import upm.lssp.worker.ZookeeperWorker;
 
@@ -85,7 +85,7 @@ public class RunWorker {
         try {
             assertTrue(zooWorker.quit(user));
 
-        } catch (QuitException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(false);
         }
@@ -105,7 +105,7 @@ public class RunWorker {
         try {
             assertTrue(zooWorker.register(user));
 
-        } catch (RegistrationException e) {
+        } catch (GenericException e) {
             e.printStackTrace();
             assert(false);
         }
@@ -122,6 +122,8 @@ public class RunWorker {
             assert(false);
         } catch (RegistrationException e) {
             assert(true);
+        } catch (Exception e) {
+            assert (false);
         }
     }
 
