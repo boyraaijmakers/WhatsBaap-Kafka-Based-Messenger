@@ -21,15 +21,18 @@ public class View {
         View.stage = stage;
     }
 
+
     public static void setController(UIController uiController) {
         View.uiController = uiController;
 
         uiController.setStage(stage);
+
         try {
             uiController.setScene();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         if (Config.DEBUG) System.out.println("Controller " + uiController.getClass() + " set");
     }
 
@@ -40,6 +43,10 @@ public class View {
     /* INCOMING */
     public static boolean login(String username) throws GenericException {
         return zooWorker.register(username);
+    }
+    /* INCOMING */
+    public static boolean quit(String username) throws GenericException {
+        return zooWorker.quit(username);
     }
 
 

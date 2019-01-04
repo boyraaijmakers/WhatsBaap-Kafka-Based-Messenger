@@ -12,6 +12,7 @@ import java.io.IOException;
 public abstract class UIController {
 
     private Stage stage;
+    private String username;
 
     public void setStage(Stage stage) {
         this.stage = stage;
@@ -44,4 +45,11 @@ public abstract class UIController {
     public abstract void setScene() throws IOException;
 
 
+    public void setUsername(String username) {
+        this.username=username;
+    }
+
+    protected String getUsername() {
+        return username;
+    }
 }

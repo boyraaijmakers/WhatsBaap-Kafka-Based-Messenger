@@ -38,6 +38,7 @@ public class UserUIController extends UIController {
     }
 
 
+
     @Override
     public void setScene() throws IOException {
         if (Config.AUTOLOGIN) {
