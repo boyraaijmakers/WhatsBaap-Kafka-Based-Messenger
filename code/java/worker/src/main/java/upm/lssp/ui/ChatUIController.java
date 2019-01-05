@@ -11,6 +11,7 @@ import javafx.scene.text.Text;
 import upm.lssp.Config;
 import upm.lssp.Status;
 import upm.lssp.View;
+import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
 
 import java.io.IOException;
@@ -64,12 +65,24 @@ public class ChatUIController extends UIController implements Initializable {
     // Private methods below
 
     private void goOffline() {
+        try {
+            View.goOffline(username);
+        } catch (ConnectionException e) {
+            this.showError(e.getMessage());
+        } catch (InterruptedException e) {
+            this.showError(e.getMessage());
+        }
         this.status = Status.OFFLINE;
         this.myStatus.setFill(Color.RED);
         this.statusButton.setText("Go online");
     }
 
     private void goOnline() {
+        try {
+            View.goOnline(username);
+        } catch (ConnectionException e) {
+            this.showError(e.getMessage());
+        }
         this.status = Status.ONLINE;
         this.myStatus.setFill(Color.GREEN);
         this.statusButton.setText("Go offline");

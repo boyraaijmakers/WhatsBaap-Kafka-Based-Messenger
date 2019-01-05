@@ -1,6 +1,7 @@
 package upm.lssp;
 
 import javafx.stage.Stage;
+import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.GenericException;
 import upm.lssp.ui.UIController;
 import upm.lssp.worker.ZookeeperWorker;
@@ -52,10 +53,17 @@ public class View {
         View.username = username;
         return zooWorker.register(username);
     }
-    /* INCOMING */
     public static boolean quit(String username) throws GenericException {
         View.username = null;
         return zooWorker.quit(username);
+    }
+
+    public static boolean goOnline(String username) throws ConnectionException {
+        return zooWorker.goOnline(username);
+    }
+
+    public static boolean goOffline(String username) throws ConnectionException, InterruptedException {
+        return zooWorker.goOffline(username);
     }
 
 

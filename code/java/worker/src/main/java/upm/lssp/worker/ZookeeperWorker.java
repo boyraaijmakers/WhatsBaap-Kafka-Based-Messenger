@@ -200,31 +200,24 @@ public class ZookeeperWorker {
 
     }
 
-    public boolean goOnline(String username) {
-        //if (zoo == null) connect();
+    public boolean goOnline(String username) throws ConnectionException {
+        if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null ) {
             return false;
         }
 
         setStatusOnline(username);
-        online=true;
         return true;
 
     }
 
-    public void goOffline() {
-
-
-        try {
-            if (zoo == null) connect();
-            online=false;
-            zoo.close();
-            zoo = null;
-        } catch (Exception e) {
-
-
-        }
+    public boolean goOffline(String username) throws ConnectionException, InterruptedException {
+        if (zoo == null) connect();
+        online = false;
+        zoo.close();
+        zoo = null;
+        return false;
     }
 
     public void sendMessage() {

@@ -54,7 +54,15 @@ public class RunWorker {
 
         //Now we close the connection, we shouldn't have the node anymore
         TestTools.closeConnection();
-        zooWorker.goOffline();
+        try {
+            zooWorker.goOffline(null);
+        } catch (ConnectionException e) {
+            fail();
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            fail();
+            e.printStackTrace();
+        }
         TestTools.connect();
         assertNull(zooWorker.checkNode("/online/"+testUser1));
 
@@ -69,7 +77,13 @@ public class RunWorker {
 
     private void goOnline(String testUser1)  {
         //make a new connection
-        assertTrue(zooWorker.goOnline(testUser1));
+        try {
+            assertTrue(zooWorker.goOnline(testUser1));
+        } catch (ConnectionException e) {
+            fail();
+            e.printStackTrace();
+
+        }
         assertNotNull(zooWorker.checkNode("/online/"+testUser1));
     }
 
