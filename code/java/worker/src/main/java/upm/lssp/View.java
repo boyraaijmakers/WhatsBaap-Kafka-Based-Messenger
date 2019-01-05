@@ -13,12 +13,20 @@ public class View {
     private static ZookeeperWorker zooWorker;
     private static UIController uiController;
 
+    private static String username;
+    private static boolean logged;
+    private static boolean status;
+
     public static Stage getStage() {
         return stage;
     }
 
     public static void setStage(Stage stage) {
         View.stage = stage;
+    }
+
+    public static String getUsername() {
+        return username;
     }
 
 
@@ -32,7 +40,6 @@ public class View {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         if (Config.DEBUG) System.out.println("Controller " + uiController.getClass() + " set");
     }
 
@@ -42,10 +49,12 @@ public class View {
 
     /* INCOMING */
     public static boolean login(String username) throws GenericException {
+        View.username = username;
         return zooWorker.register(username);
     }
     /* INCOMING */
     public static boolean quit(String username) throws GenericException {
+        View.username = null;
         return zooWorker.quit(username);
     }
 

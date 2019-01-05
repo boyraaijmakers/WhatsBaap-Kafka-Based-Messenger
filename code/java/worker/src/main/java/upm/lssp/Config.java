@@ -5,7 +5,7 @@ public class Config {
     public static final int ZKSESSIONTIME =1000;
     public static final boolean DEBUG=true;
 
-    public static final boolean AUTOLOGIN = false;
+    public static final boolean AUTOLOGIN = true;
 
 
 }

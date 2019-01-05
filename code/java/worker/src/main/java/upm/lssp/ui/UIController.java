@@ -1,22 +1,31 @@
 package upm.lssp.ui;
 
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
 public abstract class UIController {
 
     private Stage stage;
-    private String username;
 
     public void setStage(Stage stage) {
         this.stage = stage;
         stage.setTitle("WhatsBaap");
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
     }
 
     public void showError(String message) {
@@ -45,11 +54,4 @@ public abstract class UIController {
     public abstract void setScene() throws IOException;
 
 
-    public void setUsername(String username) {
-        this.username=username;
-    }
-
-    protected String getUsername() {
-        return username;
-    }
 }

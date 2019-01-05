@@ -23,7 +23,7 @@
                                         <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="251.0"
                                               style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
                                             <children>
-                                                <Circle fill="#3d972b" radius="16.0" stroke="WHITE" strokeType="INSIDE">
+                                                <Circle radius="16.0" stroke="WHITE" strokeType="INSIDE">
                                                     <HBox.margin>
                                                         <Insets left="10.0"/>
                                                     </HBox.margin>
@@ -55,7 +55,7 @@
                                         <HBox alignment="CENTER_LEFT" layoutY="52.0" prefHeight="52.0" prefWidth="251.0"
                                               style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
                                             <children>
-                                                <Circle fill="#962c2c" radius="16.0" stroke="WHITE" strokeType="INSIDE">
+                                                <Circle radius="16.0" stroke="WHITE" strokeType="INSIDE">
                                                     <HBox.margin>
                                                         <Insets left="10.0"/>
                                                     </HBox.margin>
@@ -117,14 +117,14 @@
         </HBox>
         <HBox alignment="CENTER_LEFT" layoutX="251.0" prefHeight="52.0" prefWidth="618.0">
             <children>
-                <Circle fill="#3d972b" radius="18.0" stroke="WHITE" strokeType="INSIDE">
+                <Circle fx:id="myStatus" radius="18.0" stroke="WHITE" strokeType="INSIDE">
                     <HBox.margin>
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </Circle>
                 <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="404.0">
                     <children>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Phil Username">
+                        <Text fx:id="myUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="Username">
                             <font>
                                 <Font name="Avenir Light Oblique" size="23.0"/>
                             </font>
@@ -137,7 +137,7 @@
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </HBox>
-                <Button mnemonicParsing="false" text="Go Offline">
+                <Button fx:id="statusButton" mnemonicParsing="false" onAction="#changeStatus" text="Go Offline">
 
                     <HBox.margin>
                         <Insets right="10.0"/>
