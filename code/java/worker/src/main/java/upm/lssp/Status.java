@@ -2,5 +2,6 @@ package upm.lssp;
 
 public enum Status {
     ONLINE,
-    OFFLINE
+    OFFLINE,
+    DISCONNECTED
 }

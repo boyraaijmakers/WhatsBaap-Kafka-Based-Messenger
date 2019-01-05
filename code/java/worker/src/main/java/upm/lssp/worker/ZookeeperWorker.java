@@ -4,9 +4,12 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
+import upm.lssp.Status;
 import upm.lssp.exceptions.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -101,6 +104,27 @@ public class ZookeeperWorker {
         } catch (Exception e) {
             throw new RequestException(e.getMessage());
         }
+    }
+
+    public HashMap<Status, List<String>> retrieveUserList() {
+        HashMap<Status, List<String>> users = new HashMap<Status, List<String>>();
+
+        List<String> online = null;
+        List<String> offline = null;
+        try {
+            online = zoo.getChildren("/online", false);
+            offline = zoo.getChildren("/registry", false);
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        offline.remove(online);
+
+        users.put(Status.ONLINE, online);
+        users.put(Status.OFFLINE, offline);
+        return users;
     }
 
 

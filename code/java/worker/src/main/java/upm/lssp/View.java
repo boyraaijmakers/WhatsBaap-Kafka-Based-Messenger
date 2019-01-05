@@ -7,6 +7,8 @@ import upm.lssp.ui.UIController;
 import upm.lssp.worker.ZookeeperWorker;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 
 public class View {
 
@@ -64,6 +66,10 @@ public class View {
 
     public static boolean goOffline(String username) throws ConnectionException, InterruptedException {
         return zooWorker.goOffline(username);
+    }
+
+    public static HashMap<Status, List<String>> retrieveUserList() {
+        return zooWorker.retrieveUserList();
     }
 
 

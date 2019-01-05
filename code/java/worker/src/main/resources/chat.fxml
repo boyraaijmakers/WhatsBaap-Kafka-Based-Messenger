@@ -2,12 +2,12 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.Cursor?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="677.0" prefWidth="868.0" xmlns="http://javafx.com/javafx/8"
             fx:controller="upm.lssp.ui.ChatUIController">
     <children>
@@ -15,84 +15,17 @@
             <items>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="632.0" prefWidth="248.0">
                     <children>
-                        <VBox alignment="CENTER" prefHeight="31.0" prefWidth="251.0"/>
-                        <ScrollPane layoutY="-2.0" prefHeight="626.0" prefWidth="251.0">
+                        <ScrollPane layoutY="-2.0" prefHeight="624.0" prefWidth="251.0" AnchorPane.bottomAnchor="0.0"
+                                    AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <content>
-                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="608.0" prefWidth="246.0">
-                                    <children>
-                                        <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="251.0"
-                                              style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
-                                            <children>
-                                                <Circle radius="16.0" stroke="WHITE" strokeType="INSIDE">
-                                                    <HBox.margin>
-                                                        <Insets left="10.0"/>
-                                                    </HBox.margin>
-                                                </Circle>
-                                                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
-                                                    <children>
-                                                        <Text strokeType="OUTSIDE" strokeWidth="0.0"
-                                                              text="Boy Username">
-                                                            <font>
-                                                                <Font name="Avenir Light Oblique" size="19.0"/>
-                                                            </font>
-                                                        </Text>
-                                                    </children>
-                                                    <opaqueInsets>
-                                                        <Insets/>
-                                                    </opaqueInsets>
-                                                    <HBox.margin>
-                                                        <Insets left="10.0"/>
-                                                    </HBox.margin>
-                                                    <cursor>
-                                                        <Cursor fx:constant="HAND"/>
-                                                    </cursor>
-                                                </HBox>
-                                            </children>
-                                            <opaqueInsets>
-                                                <Insets/>
-                                            </opaqueInsets>
-                                        </HBox>
-                                        <HBox alignment="CENTER_LEFT" layoutY="52.0" prefHeight="52.0" prefWidth="251.0"
-                                              style="-fx-border-color: #555; -fx-border-width: 0 0 1 0;">
-                                            <children>
-                                                <Circle radius="16.0" stroke="WHITE" strokeType="INSIDE">
-                                                    <HBox.margin>
-                                                        <Insets left="10.0"/>
-                                                    </HBox.margin>
-                                                </Circle>
-                                                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
-                                                    <children>
-                                                        <Text strokeType="OUTSIDE" strokeWidth="0.0"
-                                                              text="Boy Username">
-                                                            <font>
-                                                                <Font name="Avenir Light Oblique" size="19.0"/>
-                                                            </font>
-                                                        </Text>
-                                                    </children>
-                                                    <opaqueInsets>
-                                                        <Insets/>
-                                                    </opaqueInsets>
-                                                    <HBox.margin>
-                                                        <Insets left="10.0"/>
-                                                    </HBox.margin>
-                                                    <cursor>
-                                                        <Cursor fx:constant="HAND"/>
-                                                    </cursor>
-                                                </HBox>
-                                            </children>
-                                            <opaqueInsets>
-                                                <Insets/>
-                                            </opaqueInsets>
-                                        </HBox>
-                                    </children>
-                                </AnchorPane>
+                                <ListView fx:id="userList" prefHeight="606.0" prefWidth="249.0"/>
                             </content>
                         </ScrollPane>
                     </children>
                 </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="515.0" prefWidth="456.0">
                     <children>
-                        <ScrollPane layoutX="-5.0" layoutY="-25.0" prefHeight="604.0" prefWidth="618.0">
+                        <ScrollPane layoutX="-5.0" layoutY="-2.0" prefHeight="581.0" prefWidth="618.0">
                             <content>
                                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0"/>
                             </content>
