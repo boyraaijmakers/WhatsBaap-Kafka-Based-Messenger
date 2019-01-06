@@ -1,5 +1,6 @@
 package upm.lssp.ui;
 
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -7,10 +8,13 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import upm.lssp.Config;
+import upm.lssp.Message;
 import upm.lssp.Status;
 import upm.lssp.View;
 import upm.lssp.exceptions.ConnectionException;
@@ -18,15 +22,16 @@ import upm.lssp.exceptions.QuitException;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 public class ChatUIController extends UIController implements Initializable {
     private static final String FXML = "/chat.fxml";
+
+    private String username;
     @FXML
     public ListView userList;
-    private String username;
 
 
     @FXML
@@ -35,6 +40,10 @@ public class ChatUIController extends UIController implements Initializable {
     public Circle myStatus;
     @FXML
     public Text myUsername;
+    @FXML
+    public TextField textBox;
+    @FXML
+    public ListView topicView;
     private Status status;
 
 
@@ -101,32 +110,75 @@ public class ChatUIController extends UIController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         this.myUsername.setText(this.username);
         goOnline();
+        setTopicViewVisibility(false);
         getUserList();
     }
 
-    public void getUserList() {
+    private void setTopicViewVisibility(boolean condition) {
+        textBox.setVisible(condition);
+        topicView.setVisible(condition);
+    }
+
+    private void getUserList() {
+
         HashMap<Status, List<String>> users = View.retrieveUserList();
+        ArrayList<Label> toList = new ArrayList<Label>();
+
 
         for (Status status : users.keySet()) {
             for (String user : users.get(status)) {
-                if (user.equals(username)) continue;
+                //if (user.equals(username)) continue;
                 Label userLabel = new Label();
                 userLabel.setText(user);
                 Circle circle = new Circle();
-                if (status == Status.ONLINE) {
-                    circle.setFill(Color.GREEN);
-                } else if (status == Status.OFFLINE) {
-                    circle.setFill(Color.RED);
-                }
                 circle.setRadius(5.0f);
                 userLabel.setGraphic(circle);
-                userList.getItems().add(userLabel);
+                if (status == Status.ONLINE) {
+                    circle.setFill(Color.GREEN);
+
+                } else if (status == Status.OFFLINE) {
+                    circle.setFill(Color.RED);
+
+                }
+                toList.add(userLabel);
             }
         }
 
 
+        userList.getItems().clear();
+        userList.getItems().addAll(toList);
+
+        userList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                String userClicked = ((Label) userList.getSelectionModel().getSelectedItem()).getText();
+
+                if (Config.DEBUG) System.out.println("ListView user clicked on: " + userClicked);
+                getTopic(username);
+            }
+
+        });
+
+
     }
 
+    private List<String> transformMessagesToLabel(ArrayList<Message> messages) {
+        return messages.stream().map(x -> x.getText()).collect(toList());
+
+    }
+
+    private void getTopic(String participant) {
+        setTopicViewVisibility(false);
+        ArrayList<Message> messages = new ArrayList<>();
+        messages.add(new Message("phil", participant, new Date(), "Message Test"));
+        messages.add(new Message("phil", participant, new Date(), "Message Test2"));
+
+        topicView.getItems().clear();
+        topicView.getItems().addAll(transformMessagesToLabel(messages));
+
+
+        setTopicViewVisibility(true);
+    }
 
 
     @Override
