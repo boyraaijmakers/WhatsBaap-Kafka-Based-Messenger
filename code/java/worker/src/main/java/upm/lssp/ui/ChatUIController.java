@@ -18,17 +18,23 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import upm.lssp.Config;
-import upm.lssp.Message;
 import upm.lssp.Status;
 import upm.lssp.View;
 import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
+import upm.lssp.messages.DateSeparator;
+import upm.lssp.messages.Message;
+import upm.lssp.messages.MessageWrapper;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -112,15 +118,11 @@ public class ChatUIController extends UIController implements Initializable {
         this.statusButton.setText("Go offline");
     }
 
-    @FXML
-    public void initialize(URL location, ResourceBundle resources) {
-        this.myUsername.setText(this.username);
-        goOnline();
-        setTopicViewVisibility(false);
-        topicView.setMouseTransparent(true);
-        topicView.setFocusTraversable(false);
-        userList.setFocusTraversable(false);
-        getUserList();
+    private static <T> Stream<List<T>> sliding(List<T> list, int size) {
+        if (size > list.size())
+            return Stream.empty();
+        return IntStream.range(0, list.size() - size + 1)
+                .mapToObj(start -> list.subList(start, start + size));
     }
 
     private void setTopicViewVisibility(boolean condition) {
@@ -170,52 +172,136 @@ public class ChatUIController extends UIController implements Initializable {
 
     }
 
-    private List<FlowPane> transformMessagesToLabel(ArrayList<Message> messages) {
-        return messages.stream().map(message -> {
+    @FXML
+    public void initialize(URL location, ResourceBundle resources) {
+        this.myUsername.setText(this.username);
+        goOnline();
+        setTopicViewVisibility(false);
+        //topicView.setMouseTransparent(true);
+        topicView.setFocusTraversable(false);
+        userList.setFocusTraversable(false);
+        getUserList();
+    }
+
+    private List<FlowPane> uizeMessages(ArrayList<MessageWrapper> wMessages) {
+        return wMessages.stream().map(wMessage -> {
             FlowPane wrapper = new FlowPane();
+            if (wMessage instanceof DateSeparator) {
+                DateSeparator sep = (DateSeparator) wMessage;
 
-            Text text = new Text();
-            text.setText(message.getText());
-            text.setFont(Font.font("Verdana", 14));
+                wrapper.setAlignment(Pos.CENTER);
 
-            Text time = new Text();
-            time.setText(new SimpleDateFormat("HH:mm").format(message.getTime()));
-            time.setFont(Font.font("Verdana", 11));
+                Text time = new Text();
+                time.setText(new SimpleDateFormat("dd/MM/yyyy").format(sep.getTime()));
+                time.setFont(Font.font("Verdana", 14));
+                time.setWrappingWidth(100);
+                time.setTextAlignment(TextAlignment.CENTER);
+                HBox hbox = new HBox();
+                String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; -fx-background-color: rgb(210,239,125);";
 
-            HBox hbox = new HBox();
-            String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; ";
+                hbox.setMaxWidth(100);
 
-            hbox.setMaxWidth(250);
-            hbox.setPrefWidth(50);
-            hbox.setAlignment(Pos.BOTTOM_LEFT);
-            HBox.setMargin(text, new Insets(1, 5, 1, 7));
+                hbox.setAlignment(Pos.CENTER);
 
-            if (message.getSender().equals(this.username)) {
-                wrapper.setAlignment(Pos.CENTER_RIGHT);
-                hbStyle = hbStyle.concat("-fx-background-color: rgb(211, 239, 190);");
+                HBox.setMargin(time, new Insets(1, 5, 1, 7));
+                hbox.setStyle(hbStyle);
+                hbox.getChildren().add(time);
+                wrapper.getChildren().add(hbox);
+
 
             } else {
-                wrapper.setAlignment(Pos.CENTER_LEFT);
-                hbStyle = hbStyle.concat("-fx-background-color: rgb(220, 220, 220);");
+                Message message = (Message) wMessage;
+
+
+                Text text = new Text();
+                text.setText(message.getText());
+                text.setFont(Font.font("Verdana", 14));
+                text.setWrappingWidth(250);
+
+
+                Text time = new Text();
+                time.setText(new SimpleDateFormat("HH:mm").format(message.getTime()));
+                time.setFont(Font.font("Verdana", 11));
+
+
+                HBox hbox = new HBox();
+                String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; ";
+
+                hbox.setMaxWidth(250);
+                hbox.setPrefWidth(50);
+                hbox.setAlignment(Pos.BOTTOM_LEFT);
+                HBox.setMargin(text, new Insets(1, 5, 1, 7));
+
+                if (message.getSender().equals(this.username)) {
+                    wrapper.setAlignment(Pos.CENTER_RIGHT);
+                    hbStyle = hbStyle.concat("-fx-background-color: rgb(211, 239, 190);");
+
+                } else {
+                    wrapper.setAlignment(Pos.CENTER_LEFT);
+                    hbStyle = hbStyle.concat("-fx-background-color: rgb(220, 220, 220);");
+                }
+                hbox.setStyle(hbStyle);
+
+
+                hbox.getChildren().addAll(text, time);
+                wrapper.getChildren().add(hbox);
+
             }
-            hbox.setStyle(hbStyle);
-
-
-            hbox.getChildren().addAll(text, time);
-            wrapper.getChildren().add(hbox);
             return wrapper;
         }).collect(toList());
 
     }
 
+    private Date getDateOfTheDay(Date date) {
+        SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+        String dateString = fmt.format(date) + " 00:00:00";
+        Date dateNew = null;
+        try {
+            dateNew = sdf.parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return dateNew;
+    }
+
+    private ArrayList<MessageWrapper> addDaySeparator(ArrayList<MessageWrapper> messages) {
+
+        ArrayList<MessageWrapper> list = (ArrayList<MessageWrapper>) sliding(messages, 2).filter(twoMessages -> {
+            MessageWrapper first = twoMessages.get(0);
+            MessageWrapper second = twoMessages.get(0);
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+            return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
+        }).map(twoMessages -> (MessageWrapper) new DateSeparator(getDateOfTheDay(twoMessages.get(1).getTime()))).collect(toList());
+
+        //Adding the separator of the first message
+        if (messages.size() != 0) {
+            list.add(new DateSeparator(getDateOfTheDay(messages.get(0).getTime())));
+        }
+        return list;
+
+    }
+
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
-        ArrayList<Message> messages = new ArrayList<>();
-        messages.add(new Message("phil", participant, new Date(), "Is this a message? I don't think so but let's see eventually it is"));
-        messages.add(new Message(participant, "phil", new Date(), "Yes"));
+        ArrayList<MessageWrapper> messages = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            messages.add(new Message("phil", participant, new Date(), "Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+            messages.add(new Message(participant, "phil", new Date(), "Yes"));
+        }
+
+
 
         topicView.getItems().clear();
-        topicView.getItems().addAll(transformMessagesToLabel(messages));
+        //Adding date separator
+        messages.addAll(addDaySeparator(messages));
+
+        messages.sort(Comparator.comparing(MessageWrapper::getTime));
+        for (MessageWrapper wm : messages) {
+            System.out.println(wm.getTime() + " - " + wm.getClass());
+        }
+        //Merging them all together
+        topicView.getItems().addAll(uizeMessages(messages));
 
 
         setTopicViewVisibility(true);

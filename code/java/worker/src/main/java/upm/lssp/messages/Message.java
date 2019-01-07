@@ -1,8 +1,8 @@
-package upm.lssp;
+package upm.lssp.messages;
 
 import java.util.Date;
 
-public class Message {
+public class Message implements MessageWrapper {
     private String sender;
     private String receiver;
     private Date time;
