@@ -187,6 +187,15 @@ public class ChatUIController extends UIController implements Initializable {
 
         Message newMessage = new Message(username, receiver, text);
 
+        sendReceiverUIHandler(newMessage);
+        textBox.setText("");
+    }
+
+    public void receiveMessage(Message newMessage) {
+        sendReceiverUIHandler(newMessage);
+    }
+
+    private void sendReceiverUIHandler(Message newMessage) {
         //We need to create a list, which may contain a separator
         ArrayList<MessageWrapper> newMessageWrapperList = new ArrayList<>();
         newMessageWrapperList.add(newMessage);
@@ -200,9 +209,6 @@ public class ChatUIController extends UIController implements Initializable {
         topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
         lastMessageSentOrReceived = newMessage;
         scrollTopicView.setVvalue(1D);
-        textBox.setText("");
-
-
     }
 
 
@@ -233,6 +239,7 @@ public class ChatUIController extends UIController implements Initializable {
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
         textBox.requestFocus();
+        textBox.positionCaret(0);
         lastMessageSentOrReceived = null;
         ArrayList<MessageWrapper> messages = new ArrayList<>();
         int i = 0;
@@ -269,7 +276,8 @@ public class ChatUIController extends UIController implements Initializable {
         this.openedTopicWith = participant;
         setTopicViewVisibility(true);
         scrollTopicView.setVvalue(1D);
-        // scrollPane.vvalueProperty().bind(vBox.heightProperty());
+
+
     }
 
 
