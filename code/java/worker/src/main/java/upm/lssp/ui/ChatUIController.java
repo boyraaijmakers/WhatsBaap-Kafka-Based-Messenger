@@ -4,9 +4,11 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -34,10 +36,13 @@ public class ChatUIController extends UIController implements Initializable {
     private static final String FXML = "/chat.fxml";
 
     private String username;
-    @FXML
-    public VBox topicAndTextView;
     private Status status;
     private String openedTopicWith;
+    private Message lastMessageSentOrReceived;
+    private ArrayList<Message> incomingMessageQueue;
+
+    @FXML
+    public VBox topicAndTextView;
     @FXML
     public ListView userList;
     @FXML
@@ -52,7 +57,7 @@ public class ChatUIController extends UIController implements Initializable {
     public ListView topicView;
     @FXML
     public ScrollPane scrollTopicView;
-    private Message lastMessageSentOrReceived;
+
 
 
 
@@ -112,6 +117,7 @@ public class ChatUIController extends UIController implements Initializable {
         this.status = Status.ONLINE;
         this.myStatus.setFill(Color.GREEN);
         this.statusButton.setText("Go offline");
+        this.incomingMessageQueue = new ArrayList<>();
     }
 
     private static <T> Stream<List<T>> sliding(List<T> list, int size) {
@@ -126,10 +132,12 @@ public class ChatUIController extends UIController implements Initializable {
         topicAndTextView.setVisible(condition);
     }
 
-    private void getUserList() {
+
+    private void refreshUserList() {
 
         HashMap<Status, List<String>> users = View.retrieveUserList();
         ArrayList<Label> toList = new ArrayList<>();
+        System.out.println(incomingMessageQueue);
 
 
         for (Status status : Arrays.asList(Status.ONLINE, Status.OFFLINE)) {
@@ -137,17 +145,40 @@ public class ChatUIController extends UIController implements Initializable {
                 //if (user.equals(username)) continue;
                 Label userLabel = new Label();
                 userLabel.setText(user);
-                Circle circle = new Circle();
-                circle.setRadius(5.0f);
-                userLabel.setGraphic(circle);
+
+                Circle statusCircle = new Circle();
+                statusCircle.setRadius(5.0f);
+
+                userLabel.setGraphic(statusCircle);
                 if (status == Status.ONLINE) {
-                    circle.setFill(Color.GREEN);
+                    statusCircle.setFill(Color.GREEN);
 
                 } else if (status == Status.OFFLINE) {
-                    circle.setFill(Color.RED);
+                    statusCircle.setFill(Color.RED);
                 }
+
+
+                HBox hb = new HBox();
+
+                hb.getChildren().add(statusCircle);
+
+                long incomingMessagesToRead = incomingMessageQueue.stream()
+                        .filter(message -> message.getSender().equals(user)).count();
+
+                if (incomingMessagesToRead > 0) {
+                    Circle notificationCircle = new Circle();
+                    notificationCircle.setRadius(5.0f);
+                    notificationCircle.setFill(Color.BLUEVIOLET);
+
+                    hb.getChildren().add(notificationCircle);
+                    HBox.setMargin(notificationCircle, new Insets(0, 0, 0, 4));
+
+                }
+
+                userLabel.setGraphic(hb);
                 toList.add(userLabel);
             }
+
         }
 
 
@@ -160,7 +191,7 @@ public class ChatUIController extends UIController implements Initializable {
                 String userClicked = ((Label) userList.getSelectionModel().getSelectedItem()).getText();
 
                 if (Config.DEBUG) System.out.println("ListView user clicked on: " + userClicked);
-                getTopic(username);
+                getTopic(userClicked);
             }
 
         });
@@ -173,11 +204,9 @@ public class ChatUIController extends UIController implements Initializable {
         this.myUsername.setText(this.username);
         goOnline();
         setTopicViewVisibility(false);
-        //topicView.setMouseTransparent(true);
         topicView.setFocusTraversable(false);
         userList.setFocusTraversable(false);
-
-        getUserList();
+        refreshUserList();
     }
 
 
@@ -192,8 +221,16 @@ public class ChatUIController extends UIController implements Initializable {
     }
 
     public void receiveMessage(Message newMessage) {
-        sendReceiverUIHandler(newMessage);
+        //If the user view is on that chat I'll show it, otherwise I notify
+        if (newMessage.getSender().equals(openedTopicWith)) {
+            sendReceiverUIHandler(newMessage);
+        } else {
+            incomingMessageQueue.add(newMessage);
+            refreshUserList();
+        }
+
     }
+
 
     private void sendReceiverUIHandler(Message newMessage) {
         //We need to create a list, which may contain a separator
@@ -235,6 +272,15 @@ public class ChatUIController extends UIController implements Initializable {
         return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
     }
 
+    private void removeIncomingNotification(String participant) {
+
+
+        incomingMessageQueue = (ArrayList<Message>) incomingMessageQueue.stream().filter(message -> !message.getSender().equals(participant)).collect(toList());
+        System.out.println(participant);
+
+        refreshUserList();
+
+    }
 
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
@@ -256,8 +302,8 @@ public class ChatUIController extends UIController implements Initializable {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        messages.add(new Message("i: " + i, participant, date, i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-        messages.add(new Message(participant, "i: 000" + i, date, "Yes"));
+        messages.add(new Message(username, participant, date, i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        messages.add(new Message(participant, username, date, "Yes"));
 
 
         topicView.getItems().clear();
@@ -277,7 +323,7 @@ public class ChatUIController extends UIController implements Initializable {
         setTopicViewVisibility(true);
         scrollTopicView.setVvalue(1D);
 
-
+        removeIncomingNotification(participant);
     }
 
 
