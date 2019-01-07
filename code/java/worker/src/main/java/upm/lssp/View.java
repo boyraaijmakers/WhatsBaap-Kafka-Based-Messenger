@@ -72,7 +72,6 @@ public class View {
         return zooWorker.retrieveUserList();
     }
 
-
     /* Callback methods - OUTGOING */
     public static void error(String message) {
         uiController.showError(message);

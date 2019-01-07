@@ -49,6 +49,11 @@
         </SplitPane>
         <HBox alignment="CENTER" prefHeight="54.0" prefWidth="251.0">
             <children>
+                <Circle fx:id="myStatus" radius="18.0" stroke="WHITE" strokeType="INSIDE">
+                    <HBox.margin>
+                        <Insets right="10.0"/>
+                    </HBox.margin>
+                </Circle>
                 <ImageView fitHeight="52.0" fitWidth="199.0" pickOnBounds="true" preserveRatio="true">
                     <image>
                         <Image url="@assets/logo.png"/>
@@ -58,14 +63,9 @@
         </HBox>
         <HBox alignment="CENTER_LEFT" layoutX="251.0" prefHeight="52.0" prefWidth="618.0">
             <children>
-                <Circle fx:id="myStatus" radius="18.0" stroke="WHITE" strokeType="INSIDE">
-                    <HBox.margin>
-                        <Insets left="10.0"/>
-                    </HBox.margin>
-                </Circle>
                 <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="404.0">
                     <children>
-                        <Text fx:id="myUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="Username">
+                        <Text fx:id="topicUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="Topic Username">
                             <font>
                                 <Font name="Avenir Light Oblique" size="23.0"/>
                             </font>

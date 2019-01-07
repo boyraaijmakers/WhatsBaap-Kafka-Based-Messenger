@@ -50,7 +50,7 @@ public class ChatUIController extends UIController implements Initializable {
     @FXML
     public Circle myStatus;
     @FXML
-    public Text myUsername;
+    public Text topicUsername;
     @FXML
     public TextField textBox;
     @FXML
@@ -105,7 +105,7 @@ public class ChatUIController extends UIController implements Initializable {
         }
         this.status = Status.OFFLINE;
         this.myStatus.setFill(Color.RED);
-        this.statusButton.setText("Go online");
+        this.statusButton.setText("Go Online");
     }
 
     private void goOnline() {
@@ -116,7 +116,7 @@ public class ChatUIController extends UIController implements Initializable {
         }
         this.status = Status.ONLINE;
         this.myStatus.setFill(Color.GREEN);
-        this.statusButton.setText("Go offline");
+        this.statusButton.setText("Go Offline");
         this.incomingMessageQueue = new ArrayList<>();
     }
 
@@ -130,6 +130,7 @@ public class ChatUIController extends UIController implements Initializable {
     private void setTopicViewVisibility(boolean condition) {
         textBox.setVisible(condition);
         topicAndTextView.setVisible(condition);
+        topicUsername.setVisible(condition);
     }
 
 
@@ -142,7 +143,7 @@ public class ChatUIController extends UIController implements Initializable {
 
         for (Status status : Arrays.asList(Status.ONLINE, Status.OFFLINE)) {
             for (String user : users.get(status)) {
-                //if (user.equals(username)) continue;
+                if (!Config.DEBUG && user.equals(username)) continue;
                 Label userLabel = new Label();
                 userLabel.setText(user);
 
@@ -201,7 +202,6 @@ public class ChatUIController extends UIController implements Initializable {
 
     @FXML
     public void initialize(URL location, ResourceBundle resources) {
-        this.myUsername.setText(this.username);
         goOnline();
         setTopicViewVisibility(false);
         topicView.setFocusTraversable(false);
@@ -212,6 +212,7 @@ public class ChatUIController extends UIController implements Initializable {
 
     public void sendMessage() {
         String receiver = openedTopicWith;
+
         String text = textBox.getText();
 
         Message newMessage = new Message(username, receiver, text);
@@ -273,13 +274,8 @@ public class ChatUIController extends UIController implements Initializable {
     }
 
     private void removeIncomingNotification(String participant) {
-
-
         incomingMessageQueue = (ArrayList<Message>) incomingMessageQueue.stream().filter(message -> !message.getSender().equals(participant)).collect(toList());
-        System.out.println(participant);
-
         refreshUserList();
-
     }
 
     private void getTopic(String participant) {
@@ -320,6 +316,7 @@ public class ChatUIController extends UIController implements Initializable {
 
 
         this.openedTopicWith = participant;
+        this.topicUsername.setText(participant);
         setTopicViewVisibility(true);
         scrollTopicView.setVvalue(1D);
 
