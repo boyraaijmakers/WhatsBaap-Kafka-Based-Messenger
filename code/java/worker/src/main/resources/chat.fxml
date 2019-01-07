@@ -25,8 +25,8 @@
                 </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="515.0" prefWidth="456.0">
                     <children>
-                        <ScrollPane layoutX="-5.0" layoutY="-2.0" prefHeight="578.0" prefWidth="607.0"
-                                    AnchorPane.bottomAnchor="46.0" AnchorPane.leftAnchor="0.0"
+                        <ScrollPane fx:id="scrollTopicView" layoutX="-5.0" layoutY="-2.0" prefHeight="578.0"
+                                    prefWidth="607.0" AnchorPane.bottomAnchor="46.0" AnchorPane.leftAnchor="0.0"
                                     AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <content>
                                 <ListView fx:id="topicView" prefHeight="576.0" prefWidth="605.0"

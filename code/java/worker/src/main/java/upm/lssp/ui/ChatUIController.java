@@ -7,10 +7,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -56,7 +53,8 @@ public class ChatUIController extends UIController implements Initializable {
     public TextField textBox;
     @FXML
     public ListView topicView;
-
+    @FXML
+    public ScrollPane scrollTopicView;
     private Status status;
 
 
@@ -269,7 +267,7 @@ public class ChatUIController extends UIController implements Initializable {
 
         ArrayList<MessageWrapper> list = (ArrayList<MessageWrapper>) sliding(messages, 2).filter(twoMessages -> {
             MessageWrapper first = twoMessages.get(0);
-            MessageWrapper second = twoMessages.get(0);
+            MessageWrapper second = twoMessages.get(1);
             SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
             return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
         }).map(twoMessages -> (MessageWrapper) new DateSeparator(getDateOfTheDay(twoMessages.get(1).getTime()))).collect(toList());
@@ -285,26 +283,41 @@ public class ChatUIController extends UIController implements Initializable {
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
         ArrayList<MessageWrapper> messages = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            messages.add(new Message("phil", participant, new Date(), "Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-            messages.add(new Message(participant, "phil", new Date(), "Yes"));
+        int i = 0;
+        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        messages.add(new Message(participant, "i: 000" + i, new Date(), "Yes"));
+        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        String dateString = "10/15/2015 09:30:0" + i;
+        SimpleDateFormat sdf = new SimpleDateFormat("mm/dd/yyyy hh:mm:ss");
+        Date date = null;
+        try {
+            date = sdf.parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
+        messages.add(new Message("i: " + i, participant, date, i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        messages.add(new Message(participant, "i: 000" + i, date, "Yes"));
+
+
 
 
 
         topicView.getItems().clear();
+
+        //Performing a presorting
+        messages.sort(Comparator.comparing(MessageWrapper::getTime));
         //Adding date separator
         messages.addAll(addDaySeparator(messages));
 
         messages.sort(Comparator.comparing(MessageWrapper::getTime));
-        for (MessageWrapper wm : messages) {
-            System.out.println(wm.getTime() + " - " + wm.getClass());
-        }
+
         //Merging them all together
         topicView.getItems().addAll(uizeMessages(messages));
 
 
         setTopicViewVisibility(true);
+        scrollTopicView.setVvalue(1D);
     }
 
 
