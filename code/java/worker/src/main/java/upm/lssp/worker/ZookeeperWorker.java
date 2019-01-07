@@ -107,7 +107,7 @@ public class ZookeeperWorker {
     }
 
     public HashMap<Status, List<String>> retrieveUserList() {
-        HashMap<Status, List<String>> users = new HashMap<Status, List<String>>();
+        HashMap<Status, List<String>> users = new HashMap<>();
 
         List<String> online = null;
         List<String> offline = null;

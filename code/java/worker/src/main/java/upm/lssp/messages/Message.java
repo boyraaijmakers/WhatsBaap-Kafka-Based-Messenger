@@ -15,6 +15,10 @@ public class Message implements MessageWrapper {
         this.text = text;
     }
 
+    public Message(String sender, String receiver, String text) {
+        this(sender, receiver, new Date(), text);
+    }
+
     public String getSender() {
         return sender;
     }

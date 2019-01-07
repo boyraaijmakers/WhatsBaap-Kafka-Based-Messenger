@@ -4,24 +4,19 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import upm.lssp.Config;
 import upm.lssp.Status;
 import upm.lssp.View;
 import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.QuitException;
-import upm.lssp.messages.DateSeparator;
+import upm.lssp.messages.DailySeparator;
 import upm.lssp.messages.Message;
 import upm.lssp.messages.MessageWrapper;
 
@@ -40,9 +35,11 @@ public class ChatUIController extends UIController implements Initializable {
 
     private String username;
     @FXML
+    public VBox topicAndTextView;
+    private Status status;
+    private String openedTopicWith;
+    @FXML
     public ListView userList;
-
-
     @FXML
     public Button statusButton;
     @FXML
@@ -55,7 +52,8 @@ public class ChatUIController extends UIController implements Initializable {
     public ListView topicView;
     @FXML
     public ScrollPane scrollTopicView;
-    private Status status;
+    private Message lastMessageSentOrReceived;
+
 
 
 
@@ -125,16 +123,16 @@ public class ChatUIController extends UIController implements Initializable {
 
     private void setTopicViewVisibility(boolean condition) {
         textBox.setVisible(condition);
-        topicView.setVisible(condition);
+        topicAndTextView.setVisible(condition);
     }
 
     private void getUserList() {
 
         HashMap<Status, List<String>> users = View.retrieveUserList();
-        ArrayList<Label> toList = new ArrayList<Label>();
+        ArrayList<Label> toList = new ArrayList<>();
 
 
-        for (Status status : users.keySet()) {
+        for (Status status : Arrays.asList(Status.ONLINE, Status.OFFLINE)) {
             for (String user : users.get(status)) {
                 //if (user.equals(username)) continue;
                 Label userLabel = new Label();
@@ -178,116 +176,71 @@ public class ChatUIController extends UIController implements Initializable {
         //topicView.setMouseTransparent(true);
         topicView.setFocusTraversable(false);
         userList.setFocusTraversable(false);
+
         getUserList();
     }
 
-    private List<FlowPane> uizeMessages(ArrayList<MessageWrapper> wMessages) {
-        return wMessages.stream().map(wMessage -> {
-            FlowPane wrapper = new FlowPane();
-            if (wMessage instanceof DateSeparator) {
-                DateSeparator sep = (DateSeparator) wMessage;
 
-                wrapper.setAlignment(Pos.CENTER);
+    public void sendMessage() {
+        String receiver = openedTopicWith;
+        String text = textBox.getText();
 
-                Text time = new Text();
-                time.setText(new SimpleDateFormat("dd/MM/yyyy").format(sep.getTime()));
-                time.setFont(Font.font("Verdana", 14));
-                time.setWrappingWidth(100);
-                time.setTextAlignment(TextAlignment.CENTER);
-                HBox hbox = new HBox();
-                String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; -fx-background-color: rgb(210,239,125);";
+        Message newMessage = new Message(username, receiver, text);
 
-                hbox.setMaxWidth(100);
-
-                hbox.setAlignment(Pos.CENTER);
-
-                HBox.setMargin(time, new Insets(1, 5, 1, 7));
-                hbox.setStyle(hbStyle);
-                hbox.getChildren().add(time);
-                wrapper.getChildren().add(hbox);
+        //We need to create a list, which may contain a separator
+        ArrayList<MessageWrapper> newMessageWrapperList = new ArrayList<>();
+        newMessageWrapperList.add(newMessage);
 
 
-            } else {
-                Message message = (Message) wMessage;
-
-
-                Text text = new Text();
-                text.setText(message.getText());
-                text.setFont(Font.font("Verdana", 14));
-                text.setWrappingWidth(250);
-
-
-                Text time = new Text();
-                time.setText(new SimpleDateFormat("HH:mm").format(message.getTime()));
-                time.setFont(Font.font("Verdana", 11));
-
-
-                HBox hbox = new HBox();
-                String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; ";
-
-                hbox.setMaxWidth(250);
-                hbox.setPrefWidth(50);
-                hbox.setAlignment(Pos.BOTTOM_LEFT);
-                HBox.setMargin(text, new Insets(1, 5, 1, 7));
-
-                if (message.getSender().equals(this.username)) {
-                    wrapper.setAlignment(Pos.CENTER_RIGHT);
-                    hbStyle = hbStyle.concat("-fx-background-color: rgb(211, 239, 190);");
-
-                } else {
-                    wrapper.setAlignment(Pos.CENTER_LEFT);
-                    hbStyle = hbStyle.concat("-fx-background-color: rgb(220, 220, 220);");
-                }
-                hbox.setStyle(hbStyle);
-
-
-                hbox.getChildren().addAll(text, time);
-                wrapper.getChildren().add(hbox);
-
-            }
-            return wrapper;
-        }).collect(toList());
-
-    }
-
-    private Date getDateOfTheDay(Date date) {
-        SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
-        String dateString = fmt.format(date) + " 00:00:00";
-        Date dateNew = null;
-        try {
-            dateNew = sdf.parse(dateString);
-        } catch (ParseException e) {
-            e.printStackTrace();
+        if (checkIfDailySeparatorIsNeeded(lastMessageSentOrReceived, newMessage)) {
+            newMessageWrapperList.add(new DailySeparator());
         }
-        return dateNew;
+        newMessageWrapperList.sort(Comparator.comparing(MessageWrapper::getTime));
+
+        topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
+        lastMessageSentOrReceived = newMessage;
+        scrollTopicView.setVvalue(1D);
+        textBox.setText("");
+
+
     }
 
-    private ArrayList<MessageWrapper> addDaySeparator(ArrayList<MessageWrapper> messages) {
 
-        ArrayList<MessageWrapper> list = (ArrayList<MessageWrapper>) sliding(messages, 2).filter(twoMessages -> {
-            MessageWrapper first = twoMessages.get(0);
-            MessageWrapper second = twoMessages.get(1);
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
-            return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
-        }).map(twoMessages -> (MessageWrapper) new DateSeparator(getDateOfTheDay(twoMessages.get(1).getTime()))).collect(toList());
+    private ArrayList<MessageWrapper> addDailySeparator(ArrayList<MessageWrapper> messages) {
+        ArrayList<MessageWrapper> list = (ArrayList<MessageWrapper>)
+                sliding(messages, 2)
+                        .filter(this::checkIfDailySeparatorIsNeeded)
+                        .map(twoMessages -> (MessageWrapper) new DailySeparator(twoMessages.get(1).getTime()))
+                        .collect(toList());
 
         //Adding the separator of the first message
         if (messages.size() != 0) {
-            list.add(new DateSeparator(getDateOfTheDay(messages.get(0).getTime())));
+            list.add(new DailySeparator(messages.get(0).getTime()));
         }
         return list;
-
     }
+
+    private boolean checkIfDailySeparatorIsNeeded(List<MessageWrapper> twoMessages) {
+        return checkIfDailySeparatorIsNeeded(twoMessages.get(0), twoMessages.get(1));
+    }
+
+    private boolean checkIfDailySeparatorIsNeeded(MessageWrapper first, MessageWrapper second) {
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+        return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
+    }
+
 
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
+        textBox.requestFocus();
+        lastMessageSentOrReceived = null;
         ArrayList<MessageWrapper> messages = new ArrayList<>();
         int i = 0;
-        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+/*        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
         messages.add(new Message(participant, "i: 000" + i, new Date(), "Yes"));
         messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
         messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
+        */
         String dateString = "10/15/2015 09:30:0" + i;
         SimpleDateFormat sdf = new SimpleDateFormat("mm/dd/yyyy hh:mm:ss");
         Date date = null;
@@ -300,24 +253,23 @@ public class ChatUIController extends UIController implements Initializable {
         messages.add(new Message(participant, "i: 000" + i, date, "Yes"));
 
 
-
-
-
         topicView.getItems().clear();
 
-        //Performing a presorting
         messages.sort(Comparator.comparing(MessageWrapper::getTime));
         //Adding date separator
-        messages.addAll(addDaySeparator(messages));
-
+        messages.addAll(addDailySeparator(messages));
+        //Re-sort with all the Wrappers
         messages.sort(Comparator.comparing(MessageWrapper::getTime));
+        //Saving the last message sent/received
+        lastMessageSentOrReceived = (Message) messages.get(messages.size() - 1);
+        //Merging them all together into the viewlist
+        topicView.getItems().addAll(Topic.uizeMessages(messages, username));
 
-        //Merging them all together
-        topicView.getItems().addAll(uizeMessages(messages));
 
-
+        this.openedTopicWith = participant;
         setTopicViewVisibility(true);
         scrollTopicView.setVvalue(1D);
+        // scrollPane.vvalueProperty().bind(vBox.heightProperty());
     }
 
 

@@ -25,17 +25,22 @@
                 </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="515.0" prefWidth="456.0">
                     <children>
-                        <ScrollPane fx:id="scrollTopicView" layoutX="-5.0" layoutY="-2.0" prefHeight="578.0"
-                                    prefWidth="607.0" AnchorPane.bottomAnchor="46.0" AnchorPane.leftAnchor="0.0"
-                                    AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                            <content>
-                                <ListView fx:id="topicView" prefHeight="576.0" prefWidth="605.0"
-                                          stylesheets="@assets/topicView.css"/>
-                            </content>
-                        </ScrollPane>
-                        <VBox alignment="CENTER" layoutX="-5.0" layoutY="581.0" prefHeight="38.0" prefWidth="616.0">
+                        <VBox fx:id="topicAndTextView" prefHeight="624.0" prefWidth="607.0"
+                              AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                              AnchorPane.topAnchor="0.0">
                             <children>
-                                <TextField fx:id="textBox" maxWidth="550.0" prefHeight="34.0" prefWidth="550.0"/>
+                                <ScrollPane fx:id="scrollTopicView" prefHeight="697.0" prefWidth="607.0">
+                                    <content>
+                                        <ListView fx:id="topicView" prefHeight="560.0" prefWidth="605.0"
+                                                  stylesheets="@assets/topicView.css"/>
+                                    </content>
+                                </ScrollPane>
+                                <VBox alignment="CENTER" prefHeight="197.0" prefWidth="607.0">
+                                    <children>
+                                        <TextField fx:id="textBox" maxWidth="550.0" onAction="#sendMessage"
+                                                   prefHeight="34.0" prefWidth="550.0"/>
+                                    </children>
+                                </VBox>
                             </children>
                         </VBox>
                     </children>
