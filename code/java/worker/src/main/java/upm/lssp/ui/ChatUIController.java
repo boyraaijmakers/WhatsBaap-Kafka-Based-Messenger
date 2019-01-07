@@ -4,14 +4,19 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import upm.lssp.Config;
 import upm.lssp.Message;
@@ -22,6 +27,7 @@ import upm.lssp.exceptions.QuitException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -44,12 +50,12 @@ public class ChatUIController extends UIController implements Initializable {
     public TextField textBox;
     @FXML
     public ListView topicView;
+
     private Status status;
 
 
 
     public ChatUIController() {
-
         this.username = View.getUsername();
     }
 
@@ -111,6 +117,9 @@ public class ChatUIController extends UIController implements Initializable {
         this.myUsername.setText(this.username);
         goOnline();
         setTopicViewVisibility(false);
+        topicView.setMouseTransparent(true);
+        topicView.setFocusTraversable(false);
+        userList.setFocusTraversable(false);
         getUserList();
     }
 
@@ -138,7 +147,6 @@ public class ChatUIController extends UIController implements Initializable {
 
                 } else if (status == Status.OFFLINE) {
                     circle.setFill(Color.RED);
-
                 }
                 toList.add(userLabel);
             }
@@ -162,16 +170,49 @@ public class ChatUIController extends UIController implements Initializable {
 
     }
 
-    private List<String> transformMessagesToLabel(ArrayList<Message> messages) {
-        return messages.stream().map(x -> x.getText()).collect(toList());
+    private List<FlowPane> transformMessagesToLabel(ArrayList<Message> messages) {
+        return messages.stream().map(message -> {
+            FlowPane wrapper = new FlowPane();
+
+            Text text = new Text();
+            text.setText(message.getText());
+            text.setFont(Font.font("Verdana", 14));
+
+            Text time = new Text();
+            time.setText(new SimpleDateFormat("HH:mm").format(message.getTime()));
+            time.setFont(Font.font("Verdana", 11));
+
+            HBox hbox = new HBox();
+            String hbStyle = "-fx-background-radius: 20; -fx-padding: 8; ";
+
+            hbox.setMaxWidth(250);
+            hbox.setPrefWidth(50);
+            hbox.setAlignment(Pos.BOTTOM_LEFT);
+            HBox.setMargin(text, new Insets(1, 5, 1, 7));
+
+            if (message.getSender().equals(this.username)) {
+                wrapper.setAlignment(Pos.CENTER_RIGHT);
+                hbStyle = hbStyle.concat("-fx-background-color: rgb(211, 239, 190);");
+
+            } else {
+                wrapper.setAlignment(Pos.CENTER_LEFT);
+                hbStyle = hbStyle.concat("-fx-background-color: rgb(220, 220, 220);");
+            }
+            hbox.setStyle(hbStyle);
+
+
+            hbox.getChildren().addAll(text, time);
+            wrapper.getChildren().add(hbox);
+            return wrapper;
+        }).collect(toList());
 
     }
 
     private void getTopic(String participant) {
         setTopicViewVisibility(false);
         ArrayList<Message> messages = new ArrayList<>();
-        messages.add(new Message("phil", participant, new Date(), "Message Test"));
-        messages.add(new Message("phil", participant, new Date(), "Message Test2"));
+        messages.add(new Message("phil", participant, new Date(), "Is this a message? I don't think so but let's see eventually it is"));
+        messages.add(new Message(participant, "phil", new Date(), "Yes"));
 
         topicView.getItems().clear();
         topicView.getItems().addAll(transformMessagesToLabel(messages));
