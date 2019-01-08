@@ -64,8 +64,8 @@ public class View {
         return zooWorker.goOnline(username);
     }
 
-    public static boolean goOffline(String username) throws ConnectionException, InterruptedException {
-        return zooWorker.goOffline(username);
+    public static boolean goOffline() throws ConnectionException, InterruptedException {
+        return zooWorker.goOffline();
     }
 
     public static HashMap<Status, List<String>> retrieveUserList() {

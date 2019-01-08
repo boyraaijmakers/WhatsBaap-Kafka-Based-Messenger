@@ -63,7 +63,7 @@
         </HBox>
         <HBox alignment="CENTER_LEFT" layoutX="251.0" prefHeight="52.0" prefWidth="618.0">
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="404.0">
+                <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="463.0">
                     <children>
                         <Text fx:id="topicUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="Topic Username">
                             <font>

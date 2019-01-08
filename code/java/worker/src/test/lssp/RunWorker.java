@@ -55,7 +55,7 @@ public class RunWorker {
         //Now we close the connection, we shouldn't have the node anymore
         TestTools.closeConnection();
         try {
-            zooWorker.goOffline(null);
+            zooWorker.goOffline();
         } catch (ConnectionException e) {
             fail();
             e.printStackTrace();

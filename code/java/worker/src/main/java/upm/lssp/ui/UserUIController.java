@@ -2,7 +2,6 @@ package upm.lssp.ui;
 
 
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.control.TextField;
 import upm.lssp.Config;
 import upm.lssp.View;
@@ -19,6 +18,9 @@ public class UserUIController extends UIController {
     public TextField username;
 
 
+    /**
+     * Handles the login phase
+     */
     public void login() {
         if (Config.DEBUG) System.out.println("Login request for: " + username.getText());
         boolean status = false;
@@ -38,7 +40,6 @@ public class UserUIController extends UIController {
     }
 
 
-
     @Override
     public void setScene() throws IOException {
         if (Config.AUTOLOGIN) {
@@ -46,7 +47,7 @@ public class UserUIController extends UIController {
             this.username.setText("Test" + new Timestamp(System.currentTimeMillis()).getTime());
             login();
         } else {
-            super.activateScene((Parent) FXMLLoader.load(getClass().getResource(FXML)), 400, 450);
+            super.activateScene(FXMLLoader.load(getClass().getResource(FXML)), 400, 450);
         }
     }
 

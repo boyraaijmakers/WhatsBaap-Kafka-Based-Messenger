@@ -18,8 +18,7 @@ import static upm.lssp.Config.*;
 public class ZookeeperWorker {
 
     private ZooKeeper zoo = null;
-    private Boolean registered = false;
-    private Boolean online = false;
+    private boolean registered;
 
     public ZookeeperWorker() throws ConnectionException {
         BasicConfigurator.configure();
@@ -27,15 +26,19 @@ public class ZookeeperWorker {
         connect();
     }
 
+    /**
+     * Connects to ZK services
+     *
+     * @return
+     * @throws ConnectionException
+     */
     private String connect() throws ConnectionException {
 
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         try {
-            zoo=new ZooKeeper(ZKSERVER, ZKSESSIONTIME, new Watcher() {
-                public void process(WatchedEvent we) {
-                    if (we.getState() == Event.KeeperState.SyncConnected) {
-                        connectionLatch.countDown();
-                    }
+            zoo = new ZooKeeper(ZKSERVER, ZKSESSIONTIME, we -> {
+                if (we.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    connectionLatch.countDown();
                 }
             });
         } catch (IOException e) {
@@ -55,6 +58,7 @@ public class ZookeeperWorker {
 
     /**
      * Create a node with the username and append it to request
+     *
      * @param username
      * @param action
      * @return
@@ -75,12 +79,10 @@ public class ZookeeperWorker {
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
 
-            Watcher w = new Watcher() {
-                public void process(WatchedEvent we) {
-                    if(we.getType() == Event.EventType.NodeDataChanged) {
+            Watcher w = we -> {
+                if (we.getType() == Watcher.Event.EventType.NodeDataChanged) {
 
-                        handleWatcher(we.getPath(), path.split("/")[2], null);
-                    }
+                    handleWatcher(we.getPath(), path.split("/")[2], null);
                 }
             };
 
@@ -90,7 +92,6 @@ public class ZookeeperWorker {
             TimeUnit.SECONDS.sleep(2);
 
             if (checkNode("/request/" + action + "/" + username) == null) {
-                System.out.println("R: " + result);
                 return true;
             } else if (!result.equals(("-1"))) {
                 handleWatcher(path, action, result);
@@ -106,6 +107,12 @@ public class ZookeeperWorker {
         }
     }
 
+    /**
+     * Return an HashMap with keys belonging to the Status enumeration, containing
+     * a list of users
+     *
+     * @return
+     */
     public HashMap<Status, List<String>> retrieveUserList() {
         HashMap<Status, List<String>> users = new HashMap<>();
 
@@ -114,13 +121,13 @@ public class ZookeeperWorker {
         try {
             online = zoo.getChildren("/online", false);
             offline = zoo.getChildren("/registry", false);
-        } catch (KeeperException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        offline.remove(online);
+        if (offline != null) {
+            offline.remove(online);
+        }
 
         users.put(Status.ONLINE, online);
         users.put(Status.OFFLINE, offline);
@@ -128,6 +135,11 @@ public class ZookeeperWorker {
     }
 
 
+    /**
+     * Set the status of the user to online
+     *
+     * @param username
+     */
     private void setStatusOnline(String username) {
         final String path = "/online/" + username;
 
@@ -143,6 +155,8 @@ public class ZookeeperWorker {
     }
 
     /**
+     * Handles the tasks to be fulfilled by the worker after that the
+     * manager has finished its job
      *
      * @param path
      * @param action
@@ -150,9 +164,9 @@ public class ZookeeperWorker {
      */
     private void handleWatcher(String path, String action, String res) {
         String result;
-        if(res == null) {
+        if (res == null) {
             try {
-                result =  new String(zoo.getData(path, false, null));
+                result = new String(zoo.getData(path, false, null));
             } catch (Exception e) {
                 e.printStackTrace();
                 result = "0";
@@ -169,18 +183,20 @@ public class ZookeeperWorker {
         }
 
         if (result.equals("1") || result.equals("2")) {
-            if(action.equals("enroll")){
-                this.registered = true;
-            } else {
-                this.registered = false;
-            }
+            this.registered = action.equals("enroll");
         }
 
-        System.out.println("Handled request " + path + "!");
+        if (DEBUG) System.out.println("Handled request " + path + "!");
     }
 
 
-    public Stat checkNode(String path){
+    /**
+     * Check if the node exists
+     *
+     * @param path
+     * @return
+     */
+    public Stat checkNode(String path) {
         try {
             return zoo.exists(path, false);
         } catch (Exception e) {
@@ -188,10 +204,17 @@ public class ZookeeperWorker {
         }
     }
 
+    /**
+     * Register a new user
+     *
+     * @param username
+     * @return
+     * @throws GenericException
+     */
     public boolean register(String username) throws GenericException {
 
         if (zoo == null) connect();
-        if (checkNode("/registry/" + username) != null ) {
+        if (checkNode("/registry/" + username) != null) {
             if (DEBUG) System.out.printf(username + " is already registered! Passing to online");
             goOnline(username);
             return true;
@@ -207,10 +230,17 @@ public class ZookeeperWorker {
 
     }
 
+    /**
+     * Quit the user
+     *
+     * @param username
+     * @return
+     * @throws GenericException
+     */
     public boolean quit(String username) throws GenericException {
         if (zoo == null) connect();
 
-        if (checkNode("/registry/" + username) == null ) {
+        if (checkNode("/registry/" + username) == null) {
             throw new QuitException(username + " is not registered!");
         } else if (checkNode("/request/quit/" + username) != null) {
             throw new QuitException(username + " already has a pending quit request!");
@@ -224,10 +254,17 @@ public class ZookeeperWorker {
 
     }
 
+    /**
+     * Make the user to go online
+     *
+     * @param username
+     * @return
+     * @throws ConnectionException
+     */
     public boolean goOnline(String username) throws ConnectionException {
         if (zoo == null) connect();
 
-        if (checkNode("/registry/" + username) == null ) {
+        if (checkNode("/registry/" + username) == null) {
             return false;
         }
 
@@ -236,9 +273,16 @@ public class ZookeeperWorker {
 
     }
 
-    public boolean goOffline(String username) throws ConnectionException, InterruptedException {
+    /**
+     * Close the connection with the user. The node created in /online is EPHEMERAL, thus
+     * it will be deleted automatically from zk /online path, but will still exists in /registry
+     *
+     * @return
+     * @throws ConnectionException
+     * @throws InterruptedException
+     */
+    public boolean goOffline() throws ConnectionException, InterruptedException {
         if (zoo == null) connect();
-        online = false;
         zoo.close();
         zoo = null;
         return false;
@@ -254,8 +298,6 @@ public class ZookeeperWorker {
     }
 
     public String getOnlineUsers(String username) {
-
-
         try {
             if (zoo == null) connect();
             if (checkNode("/online/" + username) != null) {

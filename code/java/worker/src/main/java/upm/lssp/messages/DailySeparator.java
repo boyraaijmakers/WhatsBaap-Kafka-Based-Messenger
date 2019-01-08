@@ -19,6 +19,12 @@ public class DailySeparator implements MessageWrapper {
         return time;
     }
 
+    /**
+     * Returns an object Date on the input date (gg/mm/yyyy) but hours set at 00:00:00
+     *
+     * @param date
+     * @return
+     */
     private Date getDateOfTheDay(Date date) {
         SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");

@@ -1,10 +1,21 @@
 package upm.lssp;
 
 public class Config {
-    public static final String ZKSERVER="localhost:2181";
-    public static final int ZKSESSIONTIME =1000;
-    public static final boolean DEBUG=true;
-
+    /**
+     * ZooKeeper Server address:port
+     */
+    public static final String ZKSERVER = "localhost:2181";
+    /**
+     * ZooKeeper Server Session Time
+     */
+    public static final int ZKSESSIONTIME = 1000;
+    /**
+     * When debug is enabled all Systems out will be shown in the console
+     */
+    public static final boolean DEBUG = true;
+    /**
+     * Autologin of a test user can be useful in debug to skip the login screen
+     */
     public static final boolean AUTOLOGIN = true;
 
 

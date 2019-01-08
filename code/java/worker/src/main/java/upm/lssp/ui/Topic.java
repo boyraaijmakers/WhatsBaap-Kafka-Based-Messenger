@@ -14,11 +14,22 @@ import upm.lssp.messages.MessageWrapper;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
-public class Topic {
-    public static FlowPane uizeMessage(MessageWrapper wMessage, String thisUsername) {
+class Topic {
+
+    /**
+     * Make a MessageWrapper (either a message or a daily separator) as
+     * box to be later shown in the viewlist
+     *
+     * @param wMessage
+     * @param thisUsername
+     * @return
+     */
+    private static FlowPane uizeMessage(MessageWrapper wMessage, String thisUsername) {
         FlowPane wrapper = new FlowPane();
         if (wMessage instanceof DailySeparator) {
             DailySeparator sep = (DailySeparator) wMessage;
@@ -84,8 +95,72 @@ public class Topic {
         return wrapper;
     }
 
-    public static List<FlowPane> uizeMessages(ArrayList<MessageWrapper> wMessages, String thisUsername) {
+    /**
+     * Given an ArrayList of wrapping messages, calls uizeMessage for each
+     *
+     * @param wMessages
+     * @param thisUsername
+     * @return
+     */
+    static List<FlowPane> uizeMessages(ArrayList<MessageWrapper> wMessages, String thisUsername) {
         return wMessages.stream().map(wMessage -> uizeMessage(wMessage, thisUsername)).collect(toList());
 
+    }
+
+    /**
+     * Using a sliding window detects when a Daily separator need to be added
+     *
+     * @param messages
+     * @return
+     */
+    static ArrayList<MessageWrapper> addDailySeparator(ArrayList<MessageWrapper> messages) {
+        ArrayList<MessageWrapper> list = (ArrayList<MessageWrapper>)
+                sliding(messages, 2)
+                        .filter(Topic::checkIfDailySeparatorIsNeeded)
+                        .map(twoMessages -> (MessageWrapper) new DailySeparator(twoMessages.get(1).getTime()))
+                        .collect(toList());
+
+        //Adding the separator of the first message
+        if (messages.size() != 0) {
+            list.add(new DailySeparator(messages.get(0).getTime()));
+        }
+        return list;
+    }
+
+    /**
+     * Return true when the daily separator is needed
+     *
+     * @param twoMessages
+     * @return
+     */
+    static boolean checkIfDailySeparatorIsNeeded(List<MessageWrapper> twoMessages) {
+        return checkIfDailySeparatorIsNeeded(twoMessages.get(0), twoMessages.get(1));
+    }
+
+    /**
+     * Return true when the daily separator is needed (overloaded)
+     *
+     * @param first
+     * @param second
+     * @return
+     */
+    static boolean checkIfDailySeparatorIsNeeded(MessageWrapper first, MessageWrapper second) {
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+        return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
+    }
+
+    /**
+     * A sliding window script to cope with Java8's lack
+     *
+     * @param list
+     * @param size
+     * @param <T>
+     * @return
+     */
+    private static <T> Stream<List<T>> sliding(List<T> list, int size) {
+        if (size > list.size())
+            return Stream.empty();
+        return IntStream.range(0, list.size() - size + 1)
+                .mapToObj(start -> list.subList(start, start + size));
     }
 }
