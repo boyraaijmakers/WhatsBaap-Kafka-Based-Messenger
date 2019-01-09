@@ -1,38 +1,28 @@
 package upm.lssp.worker;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.errors.WakeupException;
 import upm.lssp.Config;
 import upm.lssp.messages.Message;
 
-import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class KafkaWorker {
 
-
-    private static final Integer MESSAGE_COUNT = 1000;
-
-    private static final String TOPIC_NAME = "demo";
-    private static final String GROUP_ID_CONFIG = "consumerGroup1";
-    private static final Integer MAX_NO_MESSAGE_FOUND_COUNT = 100;
-    private static final String OFFSET_RESET_LATEST = "latest";
-    private static final String OFFSET_RESET_EARLIER = "earliest";
-    private static final Integer MAX_POLL_RECORDS = 1;
-
-    private Producer<String, Message> producer;
-    private KafkaConsumer<String, Message> consumer;
+    private Producer<String, String> producer;
+    private KafkaConsumer<String, String> consumer;
 
     private Properties props;
-    private AtomicBoolean closed;
+    private AtomicBoolean closed = new AtomicBoolean(false);
 
 
     public KafkaWorker(String username) {
@@ -44,88 +34,59 @@ public class KafkaWorker {
         props.put("batch.size", 16384);
         props.put("linger.ms", 1);
         props.put("buffer.memory", 33554432);
-        props.put("key.serializer", "upm.lssp.messages.MessageSerializer");
-        props.put("key.deserializer", "upm.lssp.messages.MessageDeserializer");
-        props.put("value.serializer", "upm.lssp.messages.MessageSerializer");
-        props.put("value.deserializer", "upm.lssp.messages.MessageDeserializer");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("group.id", "WB");
 
         this.producer = new KafkaProducer<>(props);
         this.consumer = new KafkaConsumer<>(props);
 
-        //this.closed = new AtomicBoolean(false);
+        new Thread(() -> startConsumer(username));
+
 
     }
 
-    public boolean sendMessage(Message message) {
+    public void producer(Message message) {
 
-        String topic = getKafkaTopicName(message.getSender(), message.getReceiver());
-
-
-        this.producer.send(new ProducerRecord<>(topic, message));
-
-        return true;
-
-    }
-
-    public void subscribeConsumer(String username, List<String> topics) {
-        topics = topics.stream().map(t -> getKafkaTopicName(username, t)).collect(Collectors.toList());
-        this.consumer.unsubscribe();
-        this.consumer.subscribe(topics);
-
-    }
-
-
-    private String getKafkaTopicName(String user1, String user2) {
-        List<String> topic = Arrays.asList(user1, user2);
-        Collections.sort(topic);
-        String input = topic.get(0) + topic.get(1);
-        String sha1 = null;
+        //this.producer.send(new ProducerRecord<>(message.getReceiver(),message.getSender(),message.getText()));
+        final ProducerRecord<String, String> record = new ProducerRecord<>("topic", "sender", "message");
         try {
-            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
-            msdDigest.update(input.getBytes(StandardCharsets.UTF_8), 0, input.length());
-            sha1 = DatatypeConverter.printHexBinary(msdDigest.digest());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            RecordMetadata metadata = producer.send(record).get();
+            System.out.println("Record sent to partition " + metadata.partition()
+                    + " with offset " + metadata.offset() + " to " + metadata.topic());
+        } catch (ExecutionException | InterruptedException e) {
+            System.out.println("Error in sending record");
+            System.out.println(e);
         }
-        return sha1;
+
+
+    }
+
+    public void startConsumer(String username) {
+        try {
+            consumer.subscribe(Collections.singletonList(username));
+            while (!closed.get()) {
+                ConsumerRecords<String, String> records = consumer.poll(1000);
+                for (ConsumerRecord<String, String> record : records)
+                    System.out.printf("offset = %d, key = %s, value = %s%n", record.offset(), record.key(), record.value());
+            }
+        } catch (WakeupException e) {
+            if (!closed.get()) throw e;
+        } finally {
+            consumer.close();
+        }
     }
 
 
-    public void receiveMessages() {
-
-
-        //int noMessageFound = 0;
-        while (true) {
-            ConsumerRecords<String, Message> consumerRecords = consumer.poll(1000);
-
-            /*if (consumerRecords.count() == 0) {
-                noMessageFound++;
-                if (noMessageFound > IKafkaConstants.MAX_NO_MESSAGE_FOUND_COUNT)
-                    // If no message found count is reached to threshold exit loop.
-                    break;
-                else
-                    continue;
-            }*/
-            //print each record.
-
-            ArrayList<Message> messages = new ArrayList<>();
-            consumerRecords.forEach(m -> messages.add(m.value()));
-
-            consumerRecords.forEach(record -> {
-
-                System.out.println("Record Key " + record.key());
-                System.out.println("Record value " + record.value());
-                System.out.println("Record partition " + record.partition());
-                System.out.println("Record offset " + record.offset());
-
-
-            });
-
-            // commits the offset of record to broker.
-            consumer.commitAsync();
-        }
-
+    public void shutdownConsumer() {
+        closed.set(true);
+        consumer.wakeup();
     }
+
+
+
 
 
 }
