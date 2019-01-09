@@ -163,4 +163,6 @@ class Topic {
         return IntStream.range(0, list.size() - size + 1)
                 .mapToObj(start -> list.subList(start, start + size));
     }
+
+
 }

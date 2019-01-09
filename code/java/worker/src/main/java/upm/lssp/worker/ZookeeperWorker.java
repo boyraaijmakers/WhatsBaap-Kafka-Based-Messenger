@@ -6,8 +6,11 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import upm.lssp.Status;
 import upm.lssp.exceptions.*;
+import upm.lssp.messages.Message;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -18,7 +21,9 @@ import static upm.lssp.Config.*;
 public class ZookeeperWorker {
 
     private ZooKeeper zoo = null;
+    private KafkaWorker kafka = null;
     private boolean registered;
+
 
     public ZookeeperWorker() throws ConnectionException {
         BasicConfigurator.configure();
@@ -114,6 +119,13 @@ public class ZookeeperWorker {
      * @return
      */
     public HashMap<Status, List<String>> retrieveUserList() {
+        if (zoo == null) {
+            try {
+                connect();
+            } catch (ConnectionException e) {
+                e.printStackTrace();
+            }
+        }
         HashMap<Status, List<String>> users = new HashMap<>();
 
         List<String> online = null;
@@ -123,6 +135,10 @@ public class ZookeeperWorker {
             offline = zoo.getChildren("/registry", false);
         } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
+        }
+
+        if (online == null) {
+            online = new ArrayList<>();
         }
 
         if (offline != null) {
@@ -261,11 +277,19 @@ public class ZookeeperWorker {
      * @return
      * @throws ConnectionException
      */
-    public boolean goOnline(String username) throws ConnectionException {
+    public boolean goOnline(String username) throws GenericException {
         if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null) {
             return false;
+        }
+
+        this.kafka = new KafkaWorker(username);
+
+        try {
+            createTopicRegistry(username);
+        } catch (KeeperException | InterruptedException e) {
+            throw new GenericException("ZooKeeper was not able to create the topic registry: " + e);
         }
 
         setStatusOnline(username);
@@ -279,19 +303,128 @@ public class ZookeeperWorker {
      *
      * @return
      * @throws ConnectionException
-     * @throws InterruptedException
      */
-    public boolean goOffline() throws ConnectionException, InterruptedException {
+    public boolean goOffline() throws GenericException {
         if (zoo == null) connect();
-        zoo.close();
+        try {
+            zoo.close();
+        } catch (InterruptedException e) {
+            throw new ConnectionException("Connection error while going offline");
+        }
         zoo = null;
         return false;
     }
 
-    public void sendMessage() {
-        //if (zoo == null) connect();
+    public boolean sendMessage(Message message) throws SendException {
+        if (zoo == null) {
+            try {
+                connect();
+            } catch (ConnectionException e) {
+                throw new SendException("ZooKeeper was not able to connect while trying to send a message");
+            }
+        }
+
+
+        //Create the topic registry if it's a new conversation
+        try {
+            createTopicRegistryConversation(message.getSender(), message.getReceiver());
+        } catch (KeeperException | InterruptedException e) {
+            throw new SendException("ZooKeeper was not able to create the topic registry conversation: " + e);
+        }
+
+
+        //Send the message
+        kafka.sendMessage(message);
+
+        //Notify the topic registry of the receiver so the consumer can wake up and consume the message
+        try {
+            zoo.setData("/topics/" + message.getReceiver() + "/" + message.getSender(), "1".getBytes(), 1);
+        } catch (KeeperException | InterruptedException e) {
+            throw new SendException("ZooKeeper was not bale to change node value at the receiver's topic registry (/topics/" + message.getReceiver() + "/" + message.getSender() + "): " + e);
+        }
+
+
+        return true;
 
     }
+
+    private void createTopicRegistryConversation(String username1, String username2) throws KeeperException, InterruptedException {
+        List<String> userTopicList = Arrays.asList(username1, username2);
+        for (int i = 0; i < userTopicList.size(); i++) {
+            String user1 = userTopicList.get(i);
+            String user2 = userTopicList.get(userTopicList.size() - 1 - i);
+            if (checkNode("/topics/" + user1 + "/" + user2) != null) break;
+            zoo.create(
+                    "/topics/" + user1 + "/" + user2,
+                    "0".getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            //Watcher
+            Watcher w = we -> {
+                //Wakeup the consumer of this, as a new message was received
+                if (we.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    new Thread(() -> {
+                        kafka.receiveMessages();
+                    }).start();
+                }
+            };
+
+            zoo.getData("/topics/" + user1 + "/" + user2, w, null);
+
+
+        }
+    }
+
+    private void handleNewTopicRegistryConversation(String username, WatchedEvent we) {
+
+        if (checkNode("/topics/" + username) == null || checkNode(we.getPath()) == null) return;
+
+        List<String> children = null;
+        try {
+            children = zoo.getChildren("/topics/" + username, null);
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        kafka.subscribeConsumer(username, children);
+
+        //Watcher
+        Watcher w = innerWe -> {
+            if (we.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                handleNewTopicRegistryConversation(username, innerWe);
+            }
+        };
+
+        try {
+            zoo.getData("/topics/" + username, w, null);
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+    private void createTopicRegistry(String user) throws KeeperException, InterruptedException {
+
+        if (checkNode("/topics/" + user) != null) return;
+        zoo.create(
+                "/topics/" + user,
+                null,
+                ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        //Watcher
+        Watcher w = we -> {
+            if (we.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                handleNewTopicRegistryConversation(user, we);
+            }
+        };
+
+        zoo.getData("/topics/" + user, w, null);
+
+
+    }
+
 
     public void readMessages() {
         //if (zoo == null) connect();

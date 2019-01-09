@@ -13,8 +13,8 @@ import javafx.scene.text.Text;
 import upm.lssp.Config;
 import upm.lssp.Status;
 import upm.lssp.View;
-import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.GenericException;
+import upm.lssp.exceptions.SendException;
 import upm.lssp.messages.DailySeparator;
 import upm.lssp.messages.Message;
 import upm.lssp.messages.MessageWrapper;
@@ -92,11 +92,13 @@ public class ChatUIController extends UIController implements Initializable {
      */
     private void goOffline() {
         if (Config.DEBUG) System.out.println("GoOffline request");
+
         try {
             View.goOffline();
-        } catch (ConnectionException | InterruptedException e) {
+        } catch (GenericException e) {
             this.showError(e.getMessage());
         }
+
         this.status = Status.OFFLINE;
         this.myStatus.setFill(Color.RED);
         this.statusButton.setText("Go Online");
@@ -109,7 +111,7 @@ public class ChatUIController extends UIController implements Initializable {
         if (Config.DEBUG) System.out.println("GoOnline request");
         try {
             View.goOnline(username);
-        } catch (ConnectionException e) {
+        } catch (GenericException e) {
             this.showError(e.getMessage());
         }
         this.status = Status.ONLINE;
@@ -224,7 +226,11 @@ public class ChatUIController extends UIController implements Initializable {
         String text = textBox.getText();
 
         Message newMessage = new Message(username, receiver, text);
-
+        try {
+            View.sendMessage(newMessage);
+        } catch (SendException e) {
+            showError(e.getMessage());
+        }
         sendReceiverUIHandler(newMessage);
         textBox.setText("");
     }

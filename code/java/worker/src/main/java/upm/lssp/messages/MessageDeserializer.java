@@ -1,10 +1,11 @@
 package upm.lssp.messages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
 
-public class MessageDeserializer implements Deserializer {
+public class MessageDeserializer implements Deserializer<Message> {
     @Override
     public void close() {
     }

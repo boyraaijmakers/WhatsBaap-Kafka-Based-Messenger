@@ -1,8 +1,9 @@
 package upm.lssp;
 
 import javafx.stage.Stage;
-import upm.lssp.exceptions.ConnectionException;
 import upm.lssp.exceptions.GenericException;
+import upm.lssp.exceptions.SendException;
+import upm.lssp.messages.Message;
 import upm.lssp.ui.UIController;
 import upm.lssp.worker.ZookeeperWorker;
 
@@ -60,17 +61,22 @@ public class View {
         return zooWorker.quit(username);
     }
 
-    public static boolean goOnline(String username) throws ConnectionException {
+    public static boolean goOnline(String username) throws GenericException {
         return zooWorker.goOnline(username);
     }
 
-    public static boolean goOffline() throws ConnectionException, InterruptedException {
+    public static boolean goOffline() throws GenericException {
         return zooWorker.goOffline();
     }
 
     public static HashMap<Status, List<String>> retrieveUserList() {
         return zooWorker.retrieveUserList();
     }
+
+    public static boolean sendMessage(Message message) throws SendException {
+        return zooWorker.sendMessage(message);
+    }
+
 
     /* Callback methods - OUTGOING */
     public static void error(String message) {
@@ -80,5 +86,6 @@ public class View {
     private static void info(String message) {
         uiController.showInfo(message);
     }
+
 
 }

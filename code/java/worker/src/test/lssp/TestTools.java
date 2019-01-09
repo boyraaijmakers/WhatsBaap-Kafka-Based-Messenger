@@ -12,7 +12,7 @@ import static upm.lssp.Config.ZKSESSIONTIME;
 
 public class TestTools {
 
-    private static final List<String> structure= Arrays.asList("/request","/registry","/online","/request/enroll","/request/quit");
+    private static final List<String> structure = Arrays.asList("/request", "/registry", "/online", "/brokers", "/request/enroll", "/request/quit", "/brokers/topics");
     private static ZooKeeper zoo=null;
 
     protected static void connect(){
