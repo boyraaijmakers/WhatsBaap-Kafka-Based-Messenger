@@ -34,4 +34,6 @@ public class Message implements MessageWrapper {
     public String getText() {
         return text;
     }
+
+
 }
