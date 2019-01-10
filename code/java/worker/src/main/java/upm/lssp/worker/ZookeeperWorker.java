@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static upm.lssp.Config.*;
 
@@ -128,22 +129,21 @@ public class ZookeeperWorker {
         }
         HashMap<Status, List<String>> users = new HashMap<>();
 
-        List<String> online = null;
-        List<String> offline = null;
+        List<String> onlineNodes = null;
+        List<String> allNodes = null;
         try {
-            online = zoo.getChildren("/online", false);
-            offline = zoo.getChildren("/registry", false);
+            onlineNodes = zoo.getChildren("/online", false);
+            allNodes = zoo.getChildren("/registry", false);
         } catch (KeeperException | InterruptedException e) {
             e.printStackTrace();
         }
+        final List<String> online = onlineNodes == null ? new ArrayList<>() : onlineNodes;
 
-        if (online == null) {
-            online = new ArrayList<>();
-        }
+        if (allNodes == null) allNodes = new ArrayList<>();
 
-        if (offline != null) {
-            offline.remove(online);
-        }
+
+        List<String> offline = allNodes.stream().filter(u -> !online.contains(u)).collect(Collectors.toList());
+
 
         users.put(Status.ONLINE, online);
         users.put(Status.OFFLINE, offline);
