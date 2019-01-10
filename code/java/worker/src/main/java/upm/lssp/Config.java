@@ -20,6 +20,6 @@ public class Config {
     /**
      * Autologin of a test user can be useful in debug to skip the login screen
      */
-    public static final boolean AUTOLOGIN = false;
+    public static final boolean AUTOLOGIN = true;
 
 }

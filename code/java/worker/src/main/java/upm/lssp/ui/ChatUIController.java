@@ -1,5 +1,6 @@
 package upm.lssp.ui;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -24,6 +25,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toList;
 
@@ -41,16 +43,22 @@ public class ChatUIController extends UIController implements Initializable {
     public Text topicUsername;
     @FXML
     public TextField textBox;
-    @FXML
-    public ListView topicView;
+    private static final List<Object> incomingMessageQueue = Collections.synchronizedList(new ArrayList<>());
+    private static final List<Object> onlineUsers = Collections.synchronizedList(new ArrayList<>());
     @FXML
     public ScrollPane scrollTopicView;
+
+
     private String username;
     private Status status;
-    private String openedTopicWith;
+    private static final HashMap<String, Message> messages = new HashMap<>();
     private Message lastMessageSentOrReceived;
-    private ArrayList<Message> incomingMessageQueue;
-
+    private static String openedTopicWith;
+    @FXML
+    public Text myUsername;
+    @FXML
+    public ListView topicView;
+    private AtomicBoolean closedRefreshUserList = new AtomicBoolean(false);
 
     public ChatUIController() {
         this.username = View.getUsername();
@@ -67,6 +75,9 @@ public class ChatUIController extends UIController implements Initializable {
         } catch (GenericException e) {
             this.showError(e.getMessage());
         }
+
+        shutdownRefreshUserList();
+
         if (status) {
             if (!Config.AUTOLOGIN) this.showInfo("You have been successfully disconnected. See you!");
             View.setController(new UserUIController());
@@ -117,7 +128,14 @@ public class ChatUIController extends UIController implements Initializable {
         this.status = Status.ONLINE;
         this.myStatus.setFill(Color.GREEN);
         this.statusButton.setText("Go Offline");
-        this.incomingMessageQueue = new ArrayList<>();
+
+        /*new Thread(()-> {
+            while(!closedRefreshUserList.get()) {
+                if(openedTopicWith==null){
+                    System.err.println("NULL");
+                }
+            }
+        }).start();*/
     }
 
 
@@ -128,9 +146,13 @@ public class ChatUIController extends UIController implements Initializable {
      * @param condition
      */
     private void setTopicViewVisibility(boolean condition) {
-        textBox.setVisible(condition);
+        setTextBoxVisibility(condition);
         topicAndTextView.setVisible(condition);
         topicUsername.setVisible(condition);
+    }
+
+    private void setTextBoxVisibility(boolean condition) {
+        textBox.setVisible(condition);
     }
 
 
@@ -142,63 +164,108 @@ public class ChatUIController extends UIController implements Initializable {
      */
     private void refreshUserList() {
 
-        HashMap<Status, List<String>> users = View.retrieveUserList();
-        ArrayList<Label> toList = new ArrayList<>();
+        /*
+        boolean toSendNotification;
+        int notificationSeconds=0;
+        boolean notNotified=true;
+        */
 
+        while (!closedRefreshUserList.get()) {
+            //toSendNotification=false;
 
-        for (Status status : Arrays.asList(Status.ONLINE, Status.OFFLINE)) {
-            for (String user : users.get(status)) {
-                if (!Config.DEBUG && user.equals(username)) continue;
-                Label userLabel = new Label();
-                userLabel.setText(user);
+            HashMap<Status, List<String>> users = View.retrieveUserList();
+            ArrayList<Label> toList = new ArrayList<>();
 
-                Circle statusCircle = new Circle();
-                statusCircle.setRadius(5.0f);
-
-                userLabel.setGraphic(statusCircle);
-                if (status == Status.ONLINE) {
-                    statusCircle.setFill(Color.GREEN);
-
-                } else if (status == Status.OFFLINE) {
-                    statusCircle.setFill(Color.RED);
-                }
-
-
-                HBox hb = new HBox();
-
-                hb.getChildren().add(statusCircle);
-
-                long incomingMessagesToRead = incomingMessageQueue.stream()
-                        .filter(message -> message.getSender().equals(user)).count();
-
-                if (incomingMessagesToRead > 0) {
-                    Circle notificationCircle = new Circle();
-                    notificationCircle.setRadius(5.0f);
-                    notificationCircle.setFill(Color.BLUEVIOLET);
-
-                    hb.getChildren().add(notificationCircle);
-                    HBox.setMargin(notificationCircle, new Insets(0, 0, 0, 4));
-
-                }
-
-                userLabel.setGraphic(hb);
-                toList.add(userLabel);
+            synchronized (onlineUsers) {
+                onlineUsers.clear();
+                onlineUsers.addAll(users.get(Status.ONLINE));
             }
 
+
+            for (Status status : Arrays.asList(Status.ONLINE, Status.OFFLINE)) {
+                for (String user : users.get(status)) {
+                    if (user.equals(username)) continue;
+                    Label userLabel = new Label();
+                    userLabel.setText(user);
+
+                    Circle statusCircle = new Circle();
+                    statusCircle.setRadius(5.0f);
+
+                    userLabel.setGraphic(statusCircle);
+                    if (status == Status.ONLINE) {
+                        statusCircle.setFill(Color.GREEN);
+
+                    } else if (status == Status.OFFLINE) {
+                        statusCircle.setFill(Color.RED);
+                    }
+
+
+                    HBox hb = new HBox();
+
+                    hb.getChildren().add(statusCircle);
+                    long incomingMessagesToRead;
+
+                    synchronized (incomingMessageQueue) {
+                        incomingMessagesToRead = incomingMessageQueue.stream()
+                                .filter(message -> {
+                                    Message m = (Message) message;
+                                    return m.getSender().equals(user);
+                                })
+                                .count();
+                    }
+
+
+                    if (incomingMessagesToRead > 0) {
+                        //toSendNotification=true;
+
+
+                        Circle notificationCircle = new Circle();
+                        notificationCircle.setRadius(5.0f);
+                        notificationCircle.setFill(Color.BLUEVIOLET);
+
+                        hb.getChildren().add(notificationCircle);
+                        HBox.setMargin(notificationCircle, new Insets(0, 0, 0, 4));
+
+                    }
+
+
+                    userLabel.setGraphic(hb);
+                    toList.add(userLabel);
+                }
+
+            }
+            Platform.runLater(() -> {
+                userList.getItems().clear();
+                userList.getItems().addAll(toList);
+            });
+
+            userList.setOnMouseClicked(event -> {
+                if (userList.getSelectionModel().getSelectedItem() != null) {
+                    String userClicked = ((Label) userList.getSelectionModel().getSelectedItem()).getText();
+                    if (Config.DEBUG) System.out.println("ListView user clicked on: " + userClicked);
+                    getTopic(userClicked);
+                }
+            });
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+/*            if(toSendNotification) notificationSeconds++;
+            System.out.println("Notification seconds: "+notificationSeconds);
+
+            if(notNotified && notificationSeconds>5){
+                View.info("You have unread messages!");
+                notNotified=false;
+            }*/
         }
 
-
-        userList.getItems().clear();
-        userList.getItems().addAll(toList);
-
-        userList.setOnMouseClicked(event -> {
-            String userClicked = ((Label) userList.getSelectionModel().getSelectedItem()).getText();
-
-            if (Config.DEBUG) System.out.println("ListView user clicked on: " + userClicked);
-            getTopic(userClicked);
-        });
+    }
 
 
+    public void shutdownRefreshUserList() {
+        closedRefreshUserList.set(true);
     }
 
     /**
@@ -209,11 +276,15 @@ public class ChatUIController extends UIController implements Initializable {
      */
     @FXML
     public void initialize(URL location, ResourceBundle resources) {
+        myUsername.setText(username);
+        openedTopicWith = "";
         goOnline();
         setTopicViewVisibility(false);
+        setTextBoxVisibility(false);
         topicView.setFocusTraversable(false);
         userList.setFocusTraversable(false);
-        refreshUserList();
+        new Thread(this::refreshUserList).start();
+        new Thread(this::loadLiveMessages).start();
     }
 
 
@@ -221,8 +292,10 @@ public class ChatUIController extends UIController implements Initializable {
      * Method called when the return key on the text box is pressed
      */
     public void sendMessage() {
-        String receiver = openedTopicWith;
-
+        String receiver;
+        synchronized (openedTopicWith) {
+            receiver = openedTopicWith;
+        }
         String text = textBox.getText();
 
         Message newMessage = new Message(username, receiver, text);
@@ -241,17 +314,14 @@ public class ChatUIController extends UIController implements Initializable {
      * @param newMessage
      */
     public void receiveMessage(Message newMessage) {
-        if (Config.DEBUG) System.out.println("New message received");
-        lastMessageSentOrReceived = newMessage;
         //If the user view is on that chat I'll show it, otherwise I notify
-        if (newMessage.getSender().equals(openedTopicWith)) {
-
+        /*if (newMessage.getSender().equals(openedTopicWith)) {
             sendReceiverUIHandler(newMessage);
-        } else {
-            if (incomingMessageQueue == null) this.incomingMessageQueue = new ArrayList<>();
+        } else {*/
+        synchronized (incomingMessageQueue) {
             incomingMessageQueue.add(newMessage);
-            refreshUserList();
         }
+        //}
 
     }
 
@@ -273,8 +343,7 @@ public class ChatUIController extends UIController implements Initializable {
             newMessageWrapperList.add(new DailySeparator());
         }
         newMessageWrapperList.sort(Comparator.comparing(MessageWrapper::getTime));
-
-        topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
+        this.topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
         lastMessageSentOrReceived = newMessage;
         scrollTopicView.setVvalue(1D);
     }
@@ -285,10 +354,15 @@ public class ChatUIController extends UIController implements Initializable {
      *
      * @param participant
      */
-    private void removeIncomingNotification(String participant) {
-        incomingMessageQueue = (ArrayList<Message>) incomingMessageQueue.stream().filter(message -> !message.getSender().equals(participant)).collect(toList());
-        refreshUserList();
-    }
+    /*private void removeIncomingNotification(String participant) {
+        if(Config.DEBUG) System.out.println("Called remove incoming from queue");
+        synchronized (incomingMessageQueue) {
+            incomingMessageQueue.removeAll(incomingMessageQueue.stream().filter(message -> {
+                Message m = (Message)message;
+                return m.getSender().equals(participant);
+            }).collect(toList()));
+        }
+    }*/
 
     /**
      * Retrieve topic messages
@@ -296,9 +370,16 @@ public class ChatUIController extends UIController implements Initializable {
      * @param participant
      */
     private void getTopic(String participant) {
+        boolean isParticipantOnline;
+        synchronized (onlineUsers) {
+            isParticipantOnline = onlineUsers.contains(participant);
+        }
         setTopicViewVisibility(false);
-        textBox.requestFocus();
-        textBox.positionCaret(0);
+        setTextBoxVisibility(false);
+        synchronized (openedTopicWith) {
+            openedTopicWith = participant;
+        }
+
         lastMessageSentOrReceived = null;
         ArrayList<MessageWrapper> messages = new ArrayList<>();
         int i = 0;
@@ -332,12 +413,48 @@ public class ChatUIController extends UIController implements Initializable {
         topicView.getItems().addAll(Topic.uizeMessages(messages, username));
 
 
-        this.openedTopicWith = participant;
+
         this.topicUsername.setText(participant);
         setTopicViewVisibility(true);
-        scrollTopicView.setVvalue(1D);
 
-        removeIncomingNotification(participant);
+
+        if (isParticipantOnline) {
+            setTextBoxVisibility(true);
+            textBox.requestFocus();
+            textBox.positionCaret(0);
+        } else {
+            setTextBoxVisibility(false);
+        }
+
+
+        scrollTopicView.setVvalue(1D);
+        //removeIncomingNotification(participant);
+    }
+
+    private void loadLiveMessages() {
+        while (!closedRefreshUserList.get()) {
+            String topic;
+            synchronized (openedTopicWith) {
+                topic = openedTopicWith;
+            }
+
+            synchronized (incomingMessageQueue) {
+                List<Object> messagesToProcess = incomingMessageQueue.stream().filter(message -> {
+                    Message m = (Message) message;
+                    return m.getSender().equals(topic);
+                }).collect(toList());
+                messagesToProcess.forEach(m -> sendReceiverUIHandler((Message) m));
+                incomingMessageQueue.removeAll(messagesToProcess);
+
+            }
+
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 

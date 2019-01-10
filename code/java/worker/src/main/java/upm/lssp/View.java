@@ -83,7 +83,7 @@ public class View {
         uiController.showError(message);
     }
 
-    private static void info(String message) {
+    public static void info(String message) {
         uiController.showInfo(message);
     }
 

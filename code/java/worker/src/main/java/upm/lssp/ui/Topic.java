@@ -145,6 +145,7 @@ class Topic {
      * @return
      */
     static boolean checkIfDailySeparatorIsNeeded(MessageWrapper first, MessageWrapper second) {
+        if (first == null || second == null) return true;
         SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
         return !fmt.format(first.getTime()).equals(fmt.format(second.getTime()));
     }
