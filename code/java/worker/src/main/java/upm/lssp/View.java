@@ -87,5 +87,9 @@ public class View {
         uiController.showInfo(message);
     }
 
+    public static void receiveMessage(Message message) {
+        uiController.receiveMessage(message);
+    }
+
 
 }

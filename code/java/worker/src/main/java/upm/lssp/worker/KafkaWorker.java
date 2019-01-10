@@ -9,9 +9,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.errors.WakeupException;
 import upm.lssp.Config;
+import upm.lssp.View;
 import upm.lssp.messages.Message;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,15 +45,18 @@ public class KafkaWorker {
         this.producer = new KafkaProducer<>(props);
         this.consumer = new KafkaConsumer<>(props);
 
-        new Thread(() -> startConsumer(username));
+
+        new Thread(() -> startConsumer(username)).start();
 
 
     }
 
     public void producer(Message message) {
 
-        //this.producer.send(new ProducerRecord<>(message.getReceiver(),message.getSender(),message.getText()));
-        final ProducerRecord<String, String> record = new ProducerRecord<>("topic", "sender", "message");
+
+        if (Config.DEBUG)
+            System.out.println("Send producer: to@" + message.getReceiver() + " - from@" + message.getSender() + " - msg@" + message.getText());
+        final ProducerRecord<String, String> record = new ProducerRecord<>(message.getReceiver(), message.getSender(), message.getText());
         try {
             RecordMetadata metadata = producer.send(record).get();
             System.out.println("Record sent to partition " + metadata.partition()
@@ -65,12 +70,16 @@ public class KafkaWorker {
     }
 
     public void startConsumer(String username) {
+        if (Config.DEBUG) System.out.println("Consumer started");
         try {
             consumer.subscribe(Collections.singletonList(username));
+
             while (!closed.get()) {
                 ConsumerRecords<String, String> records = consumer.poll(1000);
-                for (ConsumerRecord<String, String> record : records)
-                    System.out.printf("offset = %d, key = %s, value = %s%n", record.offset(), record.key(), record.value());
+                for (ConsumerRecord<String, String> record : records) {
+                    Message newMessage = new Message(record.key(), username, new Date(record.timestamp()), record.value());
+                    View.receiveMessage(newMessage);
+                }
             }
         } catch (WakeupException e) {
             if (!closed.get()) throw e;

@@ -19,7 +19,7 @@ public class KafkaP {
         Producer<String, String> producer = new KafkaProducer<>(props);
         for (int i = 0; i < 100; i++)
 
-            producer.send(new ProducerRecord<>("topic", "sender", "message"));
+            producer.send(new ProducerRecord<>("test2", "sender", "message"));
 
         producer.close();
     }

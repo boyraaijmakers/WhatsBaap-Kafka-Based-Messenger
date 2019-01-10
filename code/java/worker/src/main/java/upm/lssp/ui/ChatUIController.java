@@ -241,10 +241,14 @@ public class ChatUIController extends UIController implements Initializable {
      * @param newMessage
      */
     public void receiveMessage(Message newMessage) {
+        if (Config.DEBUG) System.out.println("New message received");
+        lastMessageSentOrReceived = newMessage;
         //If the user view is on that chat I'll show it, otherwise I notify
         if (newMessage.getSender().equals(openedTopicWith)) {
+
             sendReceiverUIHandler(newMessage);
         } else {
+            if (incomingMessageQueue == null) this.incomingMessageQueue = new ArrayList<>();
             incomingMessageQueue.add(newMessage);
             refreshUserList();
         }
@@ -259,6 +263,7 @@ public class ChatUIController extends UIController implements Initializable {
      * @param newMessage
      */
     private void sendReceiverUIHandler(Message newMessage) {
+        if (Config.DEBUG) System.out.println("sendReceiverUIHandler");
         //We need to create a list, which may contain a separator
         ArrayList<MessageWrapper> newMessageWrapperList = new ArrayList<>();
         newMessageWrapperList.add(newMessage);

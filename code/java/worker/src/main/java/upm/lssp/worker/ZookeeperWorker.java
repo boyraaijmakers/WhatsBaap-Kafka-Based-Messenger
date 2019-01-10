@@ -20,7 +20,7 @@ import static upm.lssp.Config.*;
 public class ZookeeperWorker {
 
     private ZooKeeper zoo = null;
-    private KafkaWorker kafka = null;
+    public KafkaWorker kafka = null;
     private boolean registered;
 
 
@@ -28,6 +28,7 @@ public class ZookeeperWorker {
         BasicConfigurator.configure();
         org.apache.log4j.Logger.getRootLogger().setLevel(Level.FATAL);
         connect();
+
     }
 
     /**
@@ -230,8 +231,7 @@ public class ZookeeperWorker {
 
         if (zoo == null) connect();
         if (checkNode("/registry/" + username) != null) {
-            if (DEBUG) System.out.printf(username + " is already registered! Passing to online");
-            goOnline(username);
+            if (DEBUG) System.out.println(username + " is already registered! View will pass him/her online");
             return true;
         } else if (checkNode("/request/enroll/" + username) != null) {
             throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
@@ -273,7 +273,7 @@ public class ZookeeperWorker {
     }
 
     /**
-     * Make the user to go online
+     * Make the user to go online and add a hook when the app closes to quit
      *
      * @param username
      * @return
@@ -285,9 +285,17 @@ public class ZookeeperWorker {
         if (checkNode("/registry/" + username) == null) {
             return false;
         }
-        if (DEBUG) System.out.println("Qui");
+
 
         this.kafka = new KafkaWorker(username);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                this.quit(username);
+            } catch (GenericException e) {
+                e.printStackTrace();
+            }
+        }));
 
         if (DEBUG) System.out.println("Kafka worker created for " + username);
         setStatusOnline(username);

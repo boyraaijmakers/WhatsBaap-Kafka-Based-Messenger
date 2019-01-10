@@ -25,8 +25,7 @@ function createZkTreeStructure() {
 		"/request/enroll",
 		"/request/quit",
 		"/registry",
-		"/online",
-		"/topics"
+		"/online"
 	];
 
 	for (var i in structure) {
@@ -84,7 +83,6 @@ function loginUser(user) {
 		if (stat) {
 			managerLog(user + " is now logged in!");
 			createKafkaTopic(user);
-			createKafkaTopicRegistry(user);
 		} else {
 			managerLog("Attempt of unregistered user " + user + " to log in! Removing it now...");
 			zkClient.remove(
@@ -104,22 +102,6 @@ function createKafkaTopic(user) {
 			managerLog("It's " + user + "'s first time here. Let me give him a topic!")
 			zkClient.create(
 				"/brokers/topics/" + user,
-				(err) => {
-					if (err) newState = 0;
-				}
-			);
-		}
-	});
-}
-
-function createKafkaTopicRegistry(user) {
-	zkClient.exists("/topics/" + user, (err, stat) => {
-		newState = (err) ? 0 : (stat) ? 2 : 1;
-
-		if (newState == 1) {
-			managerLog("Registering " + user + " into the topic list")
-			zkClient.create(
-				"/topics" + user,
 				(err) => {
 					if (err) newState = 0;
 				}

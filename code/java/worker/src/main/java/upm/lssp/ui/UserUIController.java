@@ -6,6 +6,7 @@ import javafx.scene.control.TextField;
 import upm.lssp.Config;
 import upm.lssp.View;
 import upm.lssp.exceptions.RegistrationException;
+import upm.lssp.messages.Message;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -49,6 +50,11 @@ public class UserUIController extends UIController {
         } else {
             super.activateScene(FXMLLoader.load(getClass().getResource(FXML)), 400, 450);
         }
+    }
+
+    @Override
+    public void receiveMessage(Message message) {
+        showError("Invalid call of the receiveMessage");
     }
 
 
