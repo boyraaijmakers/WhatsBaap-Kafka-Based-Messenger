@@ -54,11 +54,14 @@ public class ChatUIController extends UIController implements Initializable {
     private static final HashMap<String, Message> messages = new HashMap<>();
     private Message lastMessageSentOrReceived;
     private static String openedTopicWith;
+
     @FXML
     public Text myUsername;
     @FXML
     public ListView topicView;
-    private AtomicBoolean closedRefreshUserList = new AtomicBoolean(false);
+    private AtomicBoolean closeThreads = new AtomicBoolean(false);
+
+
 
     public ChatUIController() {
         this.username = View.getUsername();
@@ -130,7 +133,7 @@ public class ChatUIController extends UIController implements Initializable {
         this.statusButton.setText("Go Offline");
 
         /*new Thread(()-> {
-            while(!closedRefreshUserList.get()) {
+            while(!closeThreads.get()) {
                 if(openedTopicWith==null){
                     System.err.println("NULL");
                 }
@@ -170,7 +173,7 @@ public class ChatUIController extends UIController implements Initializable {
         boolean notNotified=true;
         */
 
-        while (!closedRefreshUserList.get()) {
+        while (!closeThreads.get()) {
             //toSendNotification=false;
 
             HashMap<Status, List<String>> users = View.retrieveUserList();
@@ -265,7 +268,7 @@ public class ChatUIController extends UIController implements Initializable {
 
 
     public void shutdownRefreshUserList() {
-        closedRefreshUserList.set(true);
+        closeThreads.set(true);
     }
 
     /**
@@ -277,14 +280,13 @@ public class ChatUIController extends UIController implements Initializable {
     @FXML
     public void initialize(URL location, ResourceBundle resources) {
         myUsername.setText(username);
-        openedTopicWith = "";
         goOnline();
         setTopicViewVisibility(false);
         setTextBoxVisibility(false);
         topicView.setFocusTraversable(false);
         userList.setFocusTraversable(false);
         new Thread(this::refreshUserList).start();
-        new Thread(this::loadLiveMessages).start();
+        new Thread(this::liveConsumer).start();
     }
 
 
@@ -314,14 +316,11 @@ public class ChatUIController extends UIController implements Initializable {
      * @param newMessage
      */
     public void receiveMessage(Message newMessage) {
-        //If the user view is on that chat I'll show it, otherwise I notify
-        /*if (newMessage.getSender().equals(openedTopicWith)) {
-            sendReceiverUIHandler(newMessage);
-        } else {*/
         synchronized (incomingMessageQueue) {
             incomingMessageQueue.add(newMessage);
+            incomingMessageQueue.notifyAll();
         }
-        //}
+
 
     }
 
@@ -343,7 +342,9 @@ public class ChatUIController extends UIController implements Initializable {
             newMessageWrapperList.add(new DailySeparator());
         }
         newMessageWrapperList.sort(Comparator.comparing(MessageWrapper::getTime));
-        this.topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
+        Platform.runLater(() -> {
+            this.topicView.getItems().addAll(Topic.uizeMessages(newMessageWrapperList, username));
+        });
         lastMessageSentOrReceived = newMessage;
         scrollTopicView.setVvalue(1D);
     }
@@ -376,7 +377,7 @@ public class ChatUIController extends UIController implements Initializable {
         }
         setTopicViewVisibility(false);
         setTextBoxVisibility(false);
-        synchronized (openedTopicWith) {
+        synchronized (this) {
             openedTopicWith = participant;
         }
 
@@ -431,28 +432,33 @@ public class ChatUIController extends UIController implements Initializable {
         //removeIncomingNotification(participant);
     }
 
-    private void loadLiveMessages() {
-        while (!closedRefreshUserList.get()) {
-            String topic;
-            synchronized (openedTopicWith) {
-                topic = openedTopicWith;
-            }
-
+    private void liveConsumer() {
+        while (!closeThreads.get()) {
             synchronized (incomingMessageQueue) {
+
+                while (incomingMessageQueue.stream().noneMatch(message -> {
+                    Message m = (Message) message;
+                    return m.getSender().equals(openedTopicWith);
+                })) {
+                    try {
+                        incomingMessageQueue.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 List<Object> messagesToProcess = incomingMessageQueue.stream().filter(message -> {
                     Message m = (Message) message;
-                    return m.getSender().equals(topic);
+                    return m.getSender().equals(openedTopicWith);
                 }).collect(toList());
                 messagesToProcess.forEach(m -> sendReceiverUIHandler((Message) m));
                 incomingMessageQueue.removeAll(messagesToProcess);
 
-            }
-
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
