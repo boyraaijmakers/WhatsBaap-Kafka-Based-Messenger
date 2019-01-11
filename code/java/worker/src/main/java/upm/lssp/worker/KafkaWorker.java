@@ -30,7 +30,7 @@ public class KafkaWorker {
         props = new Properties();
         props.put("bootstrap.servers", Config.KAFKABROKER);
         props.put("acks", "all");
-        props.put("retries", 0);
+        props.put("retries", 1);
         props.put("batch.size", 16384);
         props.put("linger.ms", 1);
         props.put("buffer.memory", 33554432);
@@ -57,11 +57,10 @@ public class KafkaWorker {
         final ProducerRecord<String, String> record = new ProducerRecord<>(message.getReceiver(), message.getSender(), message.getText());
         try {
             RecordMetadata metadata = producer.send(record).get();
-            System.out.println("Record sent to partition " + metadata.partition()
+            if (Config.DEBUG) System.out.println("Record sent to partition " + metadata.partition()
                     + " with offset " + metadata.offset() + " to " + metadata.topic());
         } catch (ExecutionException | InterruptedException e) {
-            System.out.println("Error in sending record");
-            System.out.println(e);
+            if (Config.DEBUG) System.out.println("Error in sending record: " + e.getMessage());
         }
 
 

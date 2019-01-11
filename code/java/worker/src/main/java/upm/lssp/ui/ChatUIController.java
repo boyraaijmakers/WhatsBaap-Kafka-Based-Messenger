@@ -301,11 +301,13 @@ public class ChatUIController extends UIController implements Initializable {
      * Method called when the return key on the text box is pressed
      */
     public void sendMessage() {
+        String text = textBox.getText();
+        if (text.length() == 0) return;
         String receiver;
         synchronized (openedTopicLock) {
             receiver = openedTopicWith;
         }
-        String text = textBox.getText();
+
 
         Message newMessage = new Message(username, receiver, text);
         try {
@@ -329,8 +331,6 @@ public class ChatUIController extends UIController implements Initializable {
             incomingMessageQueue.addAll(newMessages);
             incomingMessageQueue.notifyAll();
         }
-
-
     }
 
 

@@ -88,14 +88,20 @@ public class ZookeeperWorker {
             Watcher w = we -> {
                 if (we.getType() == Watcher.Event.EventType.NodeDataChanged) {
 
-                    handleWatcher(we.getPath(), path.split("/")[2], null);
+                    try {
+                        handleWatcher(we.getPath(), path.split("/")[2], null);
+                    } catch (RequestException e) {
+                        e.printStackTrace();
+                    }
                 }
             };
 
 
             String result = new String(zoo.getData("/request/" + action + "/" + username, w, null));
 
-            TimeUnit.SECONDS.sleep(2);
+            TimeUnit.SECONDS.sleep(1);
+
+
 
             if (checkNode("/request/" + action + "/" + username) == null) {
                 return true;
@@ -103,7 +109,6 @@ public class ZookeeperWorker {
                 handleWatcher(path, action, result);
                 return true;
             }
-
 
             throw new RequestException("The manager didn't handle the request. Check that the manager is working and try again");
 
@@ -178,14 +183,14 @@ public class ZookeeperWorker {
      * @param action
      * @param res
      */
-    private void handleWatcher(String path, String action, String res) {
+    private void handleWatcher(String path, String action, String res) throws RequestException {
         String result;
         if (res == null) {
             try {
                 result = new String(zoo.getData(path, false, null));
             } catch (Exception e) {
                 e.printStackTrace();
-                result = "0";
+                throw new RequestException("Failure in getting the data from the node");
             }
         } else {
             result = res;
@@ -200,6 +205,9 @@ public class ZookeeperWorker {
 
         if (result.equals("1") || result.equals("2")) {
             this.registered = action.equals("enroll");
+        }
+        if (result.equals("0")) {
+            throw new RequestException("The manager has set the node to 0");
         }
 
         if (DEBUG) System.out.println("Handled request " + path + "!");
@@ -230,17 +238,17 @@ public class ZookeeperWorker {
     public boolean register(String username) throws GenericException {
 
         if (zoo == null) connect();
-        if (!username.matches("^[a-zA-Z]+")) {
+        if (!username.matches("^[a-zA-Z0-9]+")) {
             throw new RegistrationException("The username contains illegal characters. Please use only upper-lower case letters and check that its length is less than 25");
         } else if (username.length() > 25) {
             throw new RegistrationException("The username choosen is too long. Please use only upper-lower case letters and check that its length is less than 25");
+        } else if (checkNode("/request/enroll/" + username) != null) {
+            throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
         } else if (checkNode("/registry/" + username) != null && checkNode("/online/" + username) == null) {
             if (DEBUG) System.out.println(username + " is already registered! View will pass him/her online");
             return true;
         } else if (checkNode("/online/" + username) != null) {
             throw new RegistrationException(username + " is already taken. Choose another one");
-        } else if (checkNode("/request/enroll/" + username) != null) {
-            throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
         }
 
         try {
@@ -264,6 +272,7 @@ public class ZookeeperWorker {
         if (checkNode("/registry/" + username) == null) {
             throw new QuitException(username + " is not registered!");
         } else if (checkNode("/request/quit/" + username) != null) {
+            registered = false;
             return true;
         }
         try {
@@ -273,7 +282,7 @@ public class ZookeeperWorker {
         } catch (RequestException e) {
             throw new QuitException(e.getMessage());
         }
-
+        registered = false;
         return true;
 
     }
@@ -289,7 +298,7 @@ public class ZookeeperWorker {
         if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null) {
-            return false;
+            throw new GenericException(username + " is not registered");
         }
 
 
@@ -297,7 +306,7 @@ public class ZookeeperWorker {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                this.quit(username);
+                if (registered) this.quit(username);
             } catch (GenericException e) {
                 e.printStackTrace();
             }
@@ -346,11 +355,11 @@ public class ZookeeperWorker {
 
 
         //Create the topic registry if it's a new conversation
-        try {
+        /*try {
             createTopicRegistryConversation(message.getSender(), message.getReceiver());
         } catch (KeeperException | InterruptedException e) {
             throw new SendException("ZooKeeper was not able to create the topic registry conversation: " + e);
-        }
+        }*/
 
 
         //Send the message

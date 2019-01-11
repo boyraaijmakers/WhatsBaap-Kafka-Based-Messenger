@@ -16,7 +16,7 @@ public class Config {
     /**
      * When debug is enabled all Systems out will be shown in the console
      */
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
     /**
      * Autologin of a test user can be useful in debug to skip the login screen
      */
