@@ -334,6 +334,10 @@ public class ZookeeperWorker {
             }
         }
 
+        if (!isOnline(message.getReceiver())) {
+            throw new SendToOfflineException(message.getReceiver() + " is offline. Try later");
+        }
+
 
         //Create the topic registry if it's a new conversation
         try {
@@ -347,16 +351,13 @@ public class ZookeeperWorker {
         kafka.producer(message);
 
 
-        //Notify the topic registry of the receiver so the consumer can wake up and consume the message
-        /*try {
-            zoo.setData("/topics/" + message.getReceiver() + "/" + message.getSender(), "1".getBytes(), 1);
-        } catch (KeeperException | InterruptedException e) {
-            throw new SendException("ZooKeeper was not bale to change node value at the receiver's topic registry (/topics/" + message.getReceiver() + "/" + message.getSender() + "): " + e);
-        }*/
-
         if (DEBUG) System.out.println("Message sent");
         return true;
 
+    }
+
+    private boolean isOnline(String user) {
+        return checkNode("/online/" + user) != null;
     }
 
     private void createTopicRegistryConversation(String sender, String receiver) throws KeeperException, InterruptedException {
@@ -372,74 +373,4 @@ public class ZookeeperWorker {
             System.out.println("Topic registry conversation created at path: " + "/registry/" + sender + "/" + receiver);
 
     }
-
-    /*private void handleNewTopicRegistryConversation(String username, WatchedEvent we) {
-        if(DEBUG) System.out.println("New topic registry conversation has been added/removed for "+username);
-        if (checkNode("/topics/" + username) == null || checkNode(we.getPath()) == null) return;
-
-        List<String> children = null;
-        try {
-            children = zoo.getChildren("/topics/" + username, null);
-        } catch (KeeperException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        kafka.subscribeConsumer(username, children);
-
-        //Watcher
-        Watcher w = innerWe -> {
-            if (we.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                handleNewTopicRegistryConversation(username, innerWe);
-            }
-        };
-
-        try {
-            zoo.getData("/topics/" + username, w, null);
-        } catch (KeeperException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
-
-    private void createTopicRegistry(String user) throws KeeperException, InterruptedException {
-
-        if (checkNode("/topics/" + user) != null) return;
-        zoo.create(
-                "/topics/" + user,
-                null,
-                ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        //Watcher
-        Watcher w = we -> {
-            if (we.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                handleNewTopicRegistryConversation(user, we);
-            }
-        };
-
-        zoo.getData("/topics/" + user, w, null);
-
-
-    }*/
-
-
-    public void readMessages() {
-        //if (zoo == null) connect();
-    }
-
-    /*
-    public String getOnlineUsers(String username) {
-        try {
-            if (zoo == null) connect();
-            if (checkNode("/online/" + username) != null) {
-                return zoo.getChildren("/online", false).toString();
-            } else {
-                return "Only online users see other online users";
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }*/
 }

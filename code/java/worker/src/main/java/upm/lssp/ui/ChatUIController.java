@@ -16,6 +16,7 @@ import upm.lssp.Status;
 import upm.lssp.View;
 import upm.lssp.exceptions.GenericException;
 import upm.lssp.exceptions.SendException;
+import upm.lssp.exceptions.SendToOfflineException;
 import upm.lssp.messages.DailySeparator;
 import upm.lssp.messages.Message;
 import upm.lssp.messages.MessageWrapper;
@@ -52,6 +53,7 @@ public class ChatUIController extends UIController implements Initializable {
     private static final HashMap<String, ArrayList<MessageWrapper>> messages = new HashMap<>();
     private Message lastMessageSentOrReceived;
     private static String openedTopicWith;
+    private final Object openedTopicLock = new Object();
 
     @FXML
     public Text myUsername;
@@ -238,6 +240,13 @@ public class ChatUIController extends UIController implements Initializable {
             Platform.runLater(() -> {
                 userList.getItems().clear();
                 userList.getItems().addAll(toList);
+                synchronized (openedTopicLock) {
+                    if (!onlineUsers.contains(openedTopicWith)) {
+                        setTextBoxVisibility(false);
+                    } else {
+                        setTextBoxVisibility(true);
+                    }
+                }
             });
 
             userList.setOnMouseClicked(event -> {
@@ -265,7 +274,7 @@ public class ChatUIController extends UIController implements Initializable {
     }
 
 
-    public void shutdownRefreshUserList() {
+    private void shutdownRefreshUserList() {
         closeThreads.set(true);
     }
 
@@ -293,7 +302,7 @@ public class ChatUIController extends UIController implements Initializable {
      */
     public void sendMessage() {
         String receiver;
-        synchronized (openedTopicWith) {
+        synchronized (openedTopicLock) {
             receiver = openedTopicWith;
         }
         String text = textBox.getText();
@@ -301,12 +310,16 @@ public class ChatUIController extends UIController implements Initializable {
         Message newMessage = new Message(username, receiver, text);
         try {
             View.sendMessage(newMessage);
+            sendReceiverUIHandler(newMessage);
+            messages.computeIfAbsent(newMessage.getSender(), k -> new ArrayList<>());
+            messages.get(newMessage.getReceiver()).add(newMessage);
+        } catch (SendToOfflineException e) {
+            showError(e.getMessage());
+            setTextBoxVisibility(false);
         } catch (SendException e) {
             showError(e.getMessage());
         }
-        sendReceiverUIHandler(newMessage);
-        messages.computeIfAbsent(newMessage.getSender(), k -> new ArrayList<>());
-        messages.get(newMessage.getReceiver()).add(newMessage);
+
 
         textBox.setText("");
     }
@@ -354,13 +367,12 @@ public class ChatUIController extends UIController implements Initializable {
      */
     private void getTopic(String participant) {
         boolean isParticipantOnline;
-        boolean emptyTopic = true;
         synchronized (onlineUsers) {
             isParticipantOnline = onlineUsers.contains(participant);
         }
         setTopicViewVisibility(false);
         setTextBoxVisibility(false);
-        synchronized (this) {
+        synchronized (openedTopicLock) {
             openedTopicWith = participant;
         }
 
