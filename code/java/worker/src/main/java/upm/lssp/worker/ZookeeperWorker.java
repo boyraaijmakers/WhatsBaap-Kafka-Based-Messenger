@@ -230,9 +230,15 @@ public class ZookeeperWorker {
     public boolean register(String username) throws GenericException {
 
         if (zoo == null) connect();
-        if (checkNode("/registry/" + username) != null) {
+        if (!username.matches("^[a-zA-Z]+")) {
+            throw new RegistrationException("The username contains illegal characters. Please use only upper-lower case letters and check that its length is less than 25");
+        } else if (username.length() > 25) {
+            throw new RegistrationException("The username choosen is too long. Please use only upper-lower case letters and check that its length is less than 25");
+        } else if (checkNode("/registry/" + username) != null && checkNode("/online/" + username) == null) {
             if (DEBUG) System.out.println(username + " is already registered! View will pass him/her online");
             return true;
+        } else if (checkNode("/online/" + username) != null) {
+            throw new RegistrationException(username + " is already taken. Choose another one");
         } else if (checkNode("/request/enroll/" + username) != null) {
             throw new RegistrationException(username + " already has a pending enrollment request! Choose a new one");
         }
@@ -258,7 +264,7 @@ public class ZookeeperWorker {
         if (checkNode("/registry/" + username) == null) {
             throw new QuitException(username + " is not registered!");
         } else if (checkNode("/request/quit/" + username) != null) {
-            throw new QuitException(username + " already has a pending quit request!");
+            return true;
         }
         try {
             if (createRequest(username, "quit")) {
