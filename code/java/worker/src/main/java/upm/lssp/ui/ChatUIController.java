@@ -22,8 +22,6 @@ import upm.lssp.messages.MessageWrapper;
 
 import java.io.IOException;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,7 +49,7 @@ public class ChatUIController extends UIController implements Initializable {
 
     private String username;
     private Status status;
-    private static final HashMap<String, Message> messages = new HashMap<>();
+    private static final HashMap<String, ArrayList<MessageWrapper>> messages = new HashMap<>();
     private Message lastMessageSentOrReceived;
     private static String openedTopicWith;
 
@@ -307,17 +305,15 @@ public class ChatUIController extends UIController implements Initializable {
             showError(e.getMessage());
         }
         sendReceiverUIHandler(newMessage);
+        messages.computeIfAbsent(newMessage.getSender(), k -> new ArrayList<>());
+        messages.get(newMessage.getReceiver()).add(newMessage);
+
         textBox.setText("");
     }
 
-    /**
-     * Method called when a new messages is received
-     *
-     * @param newMessage
-     */
-    public void receiveMessage(Message newMessage) {
+    public void receiveMessage(List<Message> newMessages) {
         synchronized (incomingMessageQueue) {
-            incomingMessageQueue.add(newMessage);
+            incomingMessageQueue.addAll(newMessages);
             incomingMessageQueue.notifyAll();
         }
 
@@ -350,20 +346,6 @@ public class ChatUIController extends UIController implements Initializable {
     }
 
 
-    /**
-     * Removes from incoming message queue the notification of a new message
-     *
-     * @param participant
-     */
-    /*private void removeIncomingNotification(String participant) {
-        if(Config.DEBUG) System.out.println("Called remove incoming from queue");
-        synchronized (incomingMessageQueue) {
-            incomingMessageQueue.removeAll(incomingMessageQueue.stream().filter(message -> {
-                Message m = (Message)message;
-                return m.getSender().equals(participant);
-            }).collect(toList()));
-        }
-    }*/
 
     /**
      * Retrieve topic messages
@@ -372,6 +354,7 @@ public class ChatUIController extends UIController implements Initializable {
      */
     private void getTopic(String participant) {
         boolean isParticipantOnline;
+        boolean emptyTopic = true;
         synchronized (onlineUsers) {
             isParticipantOnline = onlineUsers.contains(participant);
         }
@@ -382,36 +365,28 @@ public class ChatUIController extends UIController implements Initializable {
         }
 
         lastMessageSentOrReceived = null;
-        ArrayList<MessageWrapper> messages = new ArrayList<>();
-        int i = 0;
-/*        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-        messages.add(new Message(participant, "i: 000" + i, new Date(), "Yes"));
-        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-        messages.add(new Message("i: " + i, participant, new Date(), i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-        */
-        String dateString = "10/15/2015 09:30:0" + i;
-        SimpleDateFormat sdf = new SimpleDateFormat("mm/dd/yyyy hh:mm:ss");
-        Date date = null;
-        try {
-            date = sdf.parse(dateString);
-        } catch (ParseException e) {
-            e.printStackTrace();
+
+        ArrayList<MessageWrapper> topic_messages;
+        if (messages.get(participant) == null) {
+            topic_messages = new ArrayList<>();
+            messages.put(participant, topic_messages);
+        } else {
+            topic_messages = (ArrayList<MessageWrapper>) messages.get(participant).clone();
         }
-        messages.add(new Message(username, participant, date, i + " Is this a message? I don't think so but let's see eventually it is bla bla bla bla bla bla bla bla bla bla"));
-        messages.add(new Message(participant, username, date, "Yes"));
 
 
         topicView.getItems().clear();
 
-        messages.sort(Comparator.comparing(MessageWrapper::getTime));
+        topic_messages.sort(Comparator.comparing(MessageWrapper::getTime));
         //Adding date separator
-        messages.addAll(Topic.addDailySeparator(messages));
+        topic_messages.addAll(Topic.addDailySeparator(topic_messages));
         //Re-sort with all the Wrappers
-        messages.sort(Comparator.comparing(MessageWrapper::getTime));
+        topic_messages.sort(Comparator.comparing(MessageWrapper::getTime));
         //Saving the last message sent/received
-        lastMessageSentOrReceived = (Message) messages.get(messages.size() - 1);
+        if (topic_messages.size() > 0)
+            lastMessageSentOrReceived = (Message) topic_messages.get(topic_messages.size() - 1);
         //Merging them all together into the viewlist
-        topicView.getItems().addAll(Topic.uizeMessages(messages, username));
+        topicView.getItems().addAll(Topic.uizeMessages(topic_messages, username));
 
 
 
@@ -429,7 +404,6 @@ public class ChatUIController extends UIController implements Initializable {
 
 
         scrollTopicView.setVvalue(1D);
-        //removeIncomingNotification(participant);
     }
 
     private void liveConsumer() {
@@ -451,7 +425,11 @@ public class ChatUIController extends UIController implements Initializable {
                     Message m = (Message) message;
                     return m.getSender().equals(openedTopicWith);
                 }).collect(toList());
-                messagesToProcess.forEach(m -> sendReceiverUIHandler((Message) m));
+                messagesToProcess.forEach(m -> {
+                    sendReceiverUIHandler((Message) m);
+                    messages.get(((Message) m).getSender()).add((Message) m);
+                });
+
                 incomingMessageQueue.removeAll(messagesToProcess);
 
                 try {

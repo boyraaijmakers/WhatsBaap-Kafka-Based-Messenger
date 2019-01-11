@@ -12,6 +12,7 @@ import javafx.stage.WindowEvent;
 import upm.lssp.messages.Message;
 
 import java.io.IOException;
+import java.util.List;
 
 public abstract class UIController {
 
@@ -55,5 +56,5 @@ public abstract class UIController {
     public abstract void setScene() throws IOException;
 
 
-    public abstract void receiveMessage(Message message);
+    public abstract void receiveMessage(List<Message> message);
 }

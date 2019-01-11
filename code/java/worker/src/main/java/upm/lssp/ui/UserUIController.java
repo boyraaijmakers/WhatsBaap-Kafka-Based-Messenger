@@ -10,6 +10,7 @@ import upm.lssp.messages.Message;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class UserUIController extends UIController {
 
@@ -53,7 +54,7 @@ public class UserUIController extends UIController {
     }
 
     @Override
-    public void receiveMessage(Message message) {
+    public void receiveMessage(List<Message> message) {
         showError("Invalid call of the receiveMessage");
     }
 

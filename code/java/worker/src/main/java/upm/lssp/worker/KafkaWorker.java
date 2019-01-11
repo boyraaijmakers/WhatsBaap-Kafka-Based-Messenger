@@ -12,9 +12,7 @@ import upm.lssp.Config;
 import upm.lssp.View;
 import upm.lssp.messages.Message;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -75,11 +73,15 @@ public class KafkaWorker {
             consumer.subscribe(Collections.singletonList(username));
 
             while (!closed.get()) {
+                List<Message> messages = new ArrayList<>();
+
                 ConsumerRecords<String, String> records = consumer.poll(1000);
+
                 for (ConsumerRecord<String, String> record : records) {
                     Message newMessage = new Message(record.key(), username, new Date(record.timestamp()), record.value());
-                    View.receiveMessage(newMessage);
+                    messages.add(newMessage);
                 }
+                View.receiveMessage(messages);
             }
         } catch (WakeupException e) {
             if (!closed.get()) throw e;
