@@ -233,9 +233,9 @@ public class ZookeeperWorker {
      *
      * @param username
      * @return
-     * @throws GenericException
+     * @throws GeneralException
      */
-    public boolean register(String username) throws GenericException {
+    public boolean register(String username) throws GeneralException {
 
         if (zoo == null) connect();
         if (!username.matches("^[a-zA-Z0-9]+")) {
@@ -264,9 +264,9 @@ public class ZookeeperWorker {
      *
      * @param username
      * @return
-     * @throws GenericException
+     * @throws GeneralException
      */
-    public boolean quit(String username) throws GenericException {
+    public boolean quit(String username) throws GeneralException {
         if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null) {
@@ -294,11 +294,11 @@ public class ZookeeperWorker {
      * @return
      * @throws ConnectionException
      */
-    public boolean goOnline(String username) throws GenericException {
+    public boolean goOnline(String username) throws GeneralException {
         if (zoo == null) connect();
 
         if (checkNode("/registry/" + username) == null) {
-            throw new GenericException(username + " is not registered");
+            throw new GeneralException(username + " is not registered");
         }
 
 
@@ -307,7 +307,7 @@ public class ZookeeperWorker {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 if (registered) this.quit(username);
-            } catch (GenericException e) {
+            } catch (GeneralException e) {
                 e.printStackTrace();
             }
         }));
@@ -325,7 +325,7 @@ public class ZookeeperWorker {
      * @return
      * @throws ConnectionException
      */
-    public boolean goOffline() throws GenericException {
+    public boolean goOffline() throws GeneralException {
         if (zoo == null) connect();
 
         kafka.shutdownConsumer();
@@ -339,6 +339,12 @@ public class ZookeeperWorker {
         return true;
     }
 
+    /**
+     * Method called to send a message
+     * @param message
+     * @return
+     * @throws SendException
+     */
     public boolean sendMessage(Message message) throws SendException {
         if (DEBUG) System.out.println("Send message request");
         if (zoo == null) {
@@ -353,18 +359,7 @@ public class ZookeeperWorker {
             throw new SendToOfflineException(message.getReceiver() + " is offline. Try later");
         }
 
-
-        //Create the topic registry if it's a new conversation
-        /*try {
-            createTopicRegistryConversation(message.getSender(), message.getReceiver());
-        } catch (KeeperException | InterruptedException e) {
-            throw new SendException("ZooKeeper was not able to create the topic registry conversation: " + e);
-        }*/
-
-
-        //Send the message
         kafka.producer(message);
-
 
         if (DEBUG) System.out.println("Message sent");
         return true;
@@ -375,17 +370,4 @@ public class ZookeeperWorker {
         return checkNode("/online/" + user) != null;
     }
 
-    private void createTopicRegistryConversation(String sender, String receiver) throws KeeperException, InterruptedException {
-        if (checkNode("/registry/" + sender + "/" + receiver) != null) return;
-
-
-            zoo.create(
-                    "/registry/" + sender + "/" + receiver,
-                    null,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-        if (DEBUG)
-            System.out.println("Topic registry conversation created at path: " + "/registry/" + sender + "/" + receiver);
-
-    }
 }

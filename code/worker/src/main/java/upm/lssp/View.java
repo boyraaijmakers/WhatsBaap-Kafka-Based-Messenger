@@ -1,7 +1,7 @@
 package upm.lssp;
 
 import javafx.stage.Stage;
-import upm.lssp.exceptions.GenericException;
+import upm.lssp.exceptions.GeneralException;
 import upm.lssp.exceptions.SendException;
 import upm.lssp.messages.Message;
 import upm.lssp.ui.UIController;
@@ -52,20 +52,20 @@ public class View {
     }
 
     /* INCOMING */
-    public static boolean login(String username) throws GenericException {
+    public static boolean login(String username) throws GeneralException {
         View.username = username;
         return zooWorker.register(username);
     }
-    public static boolean quit(String username) throws GenericException {
+    public static boolean quit(String username) throws GeneralException {
         View.username = null;
         return zooWorker.quit(username);
     }
 
-    public static boolean goOnline(String username) throws GenericException {
+    public static boolean goOnline(String username) throws GeneralException {
         return zooWorker.goOnline(username);
     }
 
-    public static boolean goOffline() throws GenericException {
+    public static boolean goOffline() throws GeneralException {
         return zooWorker.goOffline();
     }
 

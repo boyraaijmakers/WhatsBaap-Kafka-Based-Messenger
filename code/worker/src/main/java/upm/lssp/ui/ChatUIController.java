@@ -14,7 +14,7 @@ import javafx.scene.text.Text;
 import upm.lssp.Config;
 import upm.lssp.Status;
 import upm.lssp.View;
-import upm.lssp.exceptions.GenericException;
+import upm.lssp.exceptions.GeneralException;
 import upm.lssp.exceptions.SendException;
 import upm.lssp.exceptions.SendToOfflineException;
 import upm.lssp.messages.DailySeparator;
@@ -30,6 +30,11 @@ import static java.util.stream.Collectors.toList;
 
 public class ChatUIController extends UIController implements Initializable {
     private static final String FXML = "/chat.fxml";
+    private static final List<Object> incomingMessageQueue = Collections.synchronizedList(new ArrayList<>());
+    private static final List<Object> onlineUsers = Collections.synchronizedList(new ArrayList<>());
+    private static final HashMap<String, ArrayList<MessageWrapper>> messages = new HashMap<>();
+    private static String openedTopicWith;
+    private final Object openedTopicLock = new Object();
     @FXML
     public VBox topicAndTextView;
     @FXML
@@ -42,25 +47,16 @@ public class ChatUIController extends UIController implements Initializable {
     public Text topicUsername;
     @FXML
     public TextField textBox;
-    private static final List<Object> incomingMessageQueue = Collections.synchronizedList(new ArrayList<>());
-    private static final List<Object> onlineUsers = Collections.synchronizedList(new ArrayList<>());
     @FXML
     public ScrollPane scrollTopicView;
-
-
-    private String username;
-    private Status status;
-    private static final HashMap<String, ArrayList<MessageWrapper>> messages = new HashMap<>();
-    private Message lastMessageSentOrReceived;
-    private static String openedTopicWith;
-    private final Object openedTopicLock = new Object();
-
     @FXML
     public Text myUsername;
     @FXML
     public ListView topicView;
+    private String username;
+    private Status status;
+    private Message lastMessageSentOrReceived;
     private AtomicBoolean closeThreads = new AtomicBoolean(false);
-
 
 
     public ChatUIController() {
@@ -75,11 +71,11 @@ public class ChatUIController extends UIController implements Initializable {
         boolean status = false;
         try {
             status = View.quit(username);
-        } catch (GenericException e) {
+        } catch (GeneralException e) {
             this.showError(e.getMessage());
         }
 
-        shutdownRefreshUserList();
+        shutdownThreads();
 
         if (status) {
             if (!Config.AUTOLOGIN) this.showInfo("You have been successfully disconnected. See you!");
@@ -109,7 +105,7 @@ public class ChatUIController extends UIController implements Initializable {
 
         try {
             View.goOffline();
-        } catch (GenericException e) {
+        } catch (GeneralException e) {
             this.showError(e.getMessage());
         }
 
@@ -125,20 +121,12 @@ public class ChatUIController extends UIController implements Initializable {
         if (Config.DEBUG) System.out.println("GoOnline request");
         try {
             View.goOnline(username);
-        } catch (GenericException e) {
+        } catch (GeneralException e) {
             this.showError(e.getMessage());
         }
         this.status = Status.ONLINE;
         this.myStatus.setFill(Color.GREEN);
         this.statusButton.setText("Go Offline");
-
-        /*new Thread(()-> {
-            while(!closeThreads.get()) {
-                if(openedTopicWith==null){
-                    System.err.println("NULL");
-                }
-            }
-        }).start();*/
     }
 
 
@@ -154,6 +142,10 @@ public class ChatUIController extends UIController implements Initializable {
         topicUsername.setVisible(condition);
     }
 
+    /**
+     * Sets the visibility of the text box to the boolean passed
+     * @param condition boolean
+     */
     private void setTextBoxVisibility(boolean condition) {
         textBox.setVisible(condition);
     }
@@ -167,14 +159,7 @@ public class ChatUIController extends UIController implements Initializable {
      */
     private void refreshUserList() {
 
-        /*
-        boolean toSendNotification;
-        int notificationSeconds=0;
-        boolean notNotified=true;
-        */
-
         while (!closeThreads.get()) {
-            //toSendNotification=false;
 
             HashMap<Status, List<String>> users = View.retrieveUserList();
             ArrayList<Label> toList = new ArrayList<>();
@@ -219,8 +204,6 @@ public class ChatUIController extends UIController implements Initializable {
 
 
                     if (incomingMessagesToRead > 0) {
-                        //toSendNotification=true;
-
 
                         Circle notificationCircle = new Circle();
                         notificationCircle.setRadius(5.0f);
@@ -230,7 +213,6 @@ public class ChatUIController extends UIController implements Initializable {
                         HBox.setMargin(notificationCircle, new Insets(0, 0, 0, 4));
 
                     }
-
 
                     userLabel.setGraphic(hb);
                     toList.add(userLabel);
@@ -262,19 +244,16 @@ public class ChatUIController extends UIController implements Initializable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-/*            if(toSendNotification) notificationSeconds++;
-            System.out.println("Notification seconds: "+notificationSeconds);
 
-            if(notNotified && notificationSeconds>5){
-                View.info("You have unread messages!");
-                notNotified=false;
-            }*/
         }
 
     }
 
 
-    private void shutdownRefreshUserList() {
+    /**
+     * Shuts down supporting threads
+     */
+    private void shutdownThreads() {
         closeThreads.set(true);
     }
 
@@ -326,6 +305,12 @@ public class ChatUIController extends UIController implements Initializable {
         textBox.setText("");
     }
 
+    /**
+     * Method indirectly called by the kafka consumer when a new
+     * message needs to me delivered to the user
+     *
+     * @param newMessages
+     */
     public void receiveMessage(List<Message> newMessages) {
         synchronized (incomingMessageQueue) {
             incomingMessageQueue.addAll(newMessages);
@@ -359,9 +344,8 @@ public class ChatUIController extends UIController implements Initializable {
     }
 
 
-
     /**
-     * Retrieve topic messages
+     * Retrieves topic messages
      *
      * @param participant
      */
@@ -401,7 +385,6 @@ public class ChatUIController extends UIController implements Initializable {
         topicView.getItems().addAll(Topic.uizeMessages(topic_messages, username));
 
 
-
         this.topicUsername.setText(participant);
         setTopicViewVisibility(true);
 
@@ -417,7 +400,10 @@ public class ChatUIController extends UIController implements Initializable {
 
         scrollTopicView.setVvalue(1D);
     }
-
+    /**
+     * Method called by a separate thread to ensure that messages
+     * sent to the topic that the user is are delivered live
+     */
     private void liveConsumer() {
         while (!closeThreads.get()) {
             synchronized (incomingMessageQueue) {

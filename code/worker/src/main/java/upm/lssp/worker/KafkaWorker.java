@@ -25,6 +25,10 @@ public class KafkaWorker {
     private AtomicBoolean closed = new AtomicBoolean(false);
 
 
+    /**
+     * Instantiate the worker and the consumer
+     * @param username the topic where receive messages
+     */
     public KafkaWorker(String username) {
 
         props = new Properties();
@@ -49,6 +53,10 @@ public class KafkaWorker {
 
     }
 
+    /**
+     * Method to post a message on a topic
+     * @param message contains info about sender and receiver
+     */
     public void producer(Message message) {
 
 
@@ -66,6 +74,11 @@ public class KafkaWorker {
 
     }
 
+    /**
+     * Method run by a separate thread, ensure that the messages
+     * posted on the opic are read
+     * @param username the kafka topic
+     */
     public void startConsumer(String username) {
         if (Config.DEBUG) System.out.println("Consumer started");
         try {
@@ -90,6 +103,9 @@ public class KafkaWorker {
     }
 
 
+    /**
+     * Shuts down the thread of the consumer
+     */
     public void shutdownConsumer() {
         closed.set(true);
         consumer.wakeup();

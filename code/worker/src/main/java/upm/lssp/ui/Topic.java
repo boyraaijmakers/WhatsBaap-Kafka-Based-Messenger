@@ -25,9 +25,9 @@ class Topic {
      * Make a MessageWrapper (either a message or a daily separator) as
      * box to be later shown in the viewlist
      *
-     * @param wMessage
-     * @param thisUsername
-     * @return
+     * @param wMessage a message that can be a Daily separator or an actual message
+     * @param thisUsername the username
+     * @return the layout of the message
      */
     private static FlowPane uizeMessage(MessageWrapper wMessage, String thisUsername) {
         FlowPane wrapper = new FlowPane();
