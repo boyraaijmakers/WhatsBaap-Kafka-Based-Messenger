@@ -1,8 +1,14 @@
 package upm.lssp.exceptions;
 
-public class RegistrationException extends GenericException {
+public class RegistrationException extends GeneralException {
 
 
+    /**
+     * Error thrown when the registration
+     * process doesn't go though
+     *
+     * @param s error string
+     */
     public RegistrationException(String s) {
         super(s);
     }
