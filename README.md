@@ -39,8 +39,3 @@ To build the project:
 - Open the command line in the folder containing the file `pom.xml`
 - Type `mvn clean install`
 - Execute `mvn exec:java`
-
-
-<p align="center">
-<a href="http://upm.es/"><img src="https://github.com/boyraaijmakers/LSSP/blob/master/code/worker/target/classes/assets/upm.png" width="300px"></a>
-</p>
