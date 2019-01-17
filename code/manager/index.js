@@ -7,7 +7,7 @@ const Pusher = require('pusher');
 
 const ZookeeperWatcher = require('zookeeper-watcher');
 
-const MANUAL_MANAGEMENT = false;
+const MANUAL_MANAGEMENT = true;
 
 var pendingRequests = {
 	"/request/enroll": [],
