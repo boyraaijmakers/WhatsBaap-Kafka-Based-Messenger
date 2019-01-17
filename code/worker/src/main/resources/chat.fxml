@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.*?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="677.0" prefWidth="868.0" xmlns="http://javafx.com/javafx/8"
+            fx:controller="upm.lssp.ui.ChatUIController">
+    <children>
+        <SplitPane dividerPositions="0.29445727482678985" layoutY="53.0" prefHeight="626.0" prefWidth="868.0">
+            <items>
+                <AnchorPane focusTraversable="true" minHeight="0.0" minWidth="0.0" prefHeight="632.0" prefWidth="248.0">
+                    <children>
+                        <ScrollPane layoutY="-2.0" prefHeight="624.0" prefWidth="251.0" AnchorPane.bottomAnchor="0.0"
+                                    AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                            <content>
+                                <ListView fx:id="userList" prefHeight="622.0" prefWidth="249.0"/>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </AnchorPane>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="515.0" prefWidth="456.0">
+                    <children>
+                        <VBox fx:id="topicAndTextView" prefHeight="624.0" prefWidth="607.0"
+                              AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                              AnchorPane.topAnchor="0.0">
+                            <children>
+                                <ScrollPane fx:id="scrollTopicView" prefHeight="697.0" prefWidth="607.0">
+                                    <content>
+                                        <ListView fx:id="topicView" prefHeight="560.0" prefWidth="605.0"
+                                                  stylesheets="@assets/topicView.css"/>
+                                    </content>
+                                </ScrollPane>
+                                <VBox alignment="CENTER" prefHeight="197.0" prefWidth="607.0">
+                                    <children>
+                                        <TextField fx:id="textBox" maxWidth="550.0" onAction="#sendMessage"
+                                                   prefHeight="34.0" prefWidth="550.0"/>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </AnchorPane>
+            </items>
+        </SplitPane>
+        <HBox alignment="CENTER" prefHeight="54.0" prefWidth="251.0">
+            <children>
+                <Circle fx:id="myStatus" radius="18.0" stroke="WHITE" strokeType="INSIDE">
+                    <HBox.margin>
+                        <Insets right="10.0"/>
+                    </HBox.margin>
+                </Circle>
+                <ImageView fitHeight="52.0" fitWidth="199.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@assets/logo.png"/>
+                    </image>
+                </ImageView>
+            </children>
+        </HBox>
+        <HBox alignment="CENTER_LEFT" layoutX="251.0" prefHeight="52.0" prefWidth="618.0">
+            <children>
+                <HBox alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="399.0">
+                    <children>
+                        <Text fx:id="topicUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="Topic Username">
+                            <font>
+                                <Font name="Avenir Light Oblique" size="23.0"/>
+                            </font>
+                        </Text>
+                    </children>
+                    <opaqueInsets>
+                        <Insets/>
+                    </opaqueInsets>
+                    <HBox.margin>
+                        <Insets left="10.0"/>
+                    </HBox.margin>
+                </HBox>
+                <VBox prefHeight="52.0" prefWidth="208.0">
+                    <children>
+                        <HBox alignment="CENTER" prefHeight="23.0" prefWidth="251.0">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Hello, ">
+                                    <font>
+                                        <Font name="Avenir Light Oblique" size="14.0"/>
+                                    </font>
+                                </Text>
+                                <Text fx:id="myUsername" strokeType="OUTSIDE" strokeWidth="0.0" text="My Username">
+                                    <font>
+                                        <Font name="Avenir Light Oblique" size="14.0"/>
+                                    </font>
+                                </Text>
+                            </children>
+                            <VBox.margin>
+                                <Insets bottom="1.0" top="2.0"/>
+                            </VBox.margin>
+                        </HBox>
+                        <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0">
+                            <children>
+                                <Button fx:id="statusButton" mnemonicParsing="false" onAction="#changeStatus"
+                                        text="Go Offline">
+                                    <HBox.margin>
+                                        <Insets right="10.0"/>
+                                    </HBox.margin>
+                                </Button>
+                                <Button mnemonicParsing="false" onAction="#quit" text="Quit"/>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </children>
+            <opaqueInsets>
+                <Insets/>
+            </opaqueInsets>
+        </HBox>
+    </children>
+</AnchorPane>
